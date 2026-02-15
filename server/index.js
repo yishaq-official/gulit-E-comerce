@@ -3,6 +3,7 @@ const cors= require('cors')
 const dotenv= require('dotenv');
 const connectDB= require('./config/db')
 const userRoutes = require('./routes/userRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ connectDB();
 
 //routes
 app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
 
 //port listener
 app.listen(PORT, (err)=>{
