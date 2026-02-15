@@ -1,8 +1,9 @@
 import express from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 
 //middlewares
@@ -14,5 +15,5 @@ app.listen(PORT, (err)=>{
     if(err){
         console.log(err);
     }
-    console.log('backend is listening succesfully.')
+    console.log(`backend is listening succesfully at PORT ${PORT}.`)
 })
