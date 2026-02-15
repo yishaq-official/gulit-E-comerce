@@ -1,15 +1,18 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+import express from 'express';
+import cors from 'cors';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS for all routes
-app.use(cors());
 
-// Parse JSON bodies
-app.use(bodyParser.json());
+//middlewares
+app.use(cors)
+app.use(express.json);
+app.use(express.urlencoded({ extended: true }));
 
-app.use('/', route)
+app.listen(PORT, (err)=>{
+    if(err){
+        console.log(err);
+    }
+    console.log('backend is listening succesfully.')
+})
