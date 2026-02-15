@@ -13,4 +13,5 @@ router.get('/profile', protect, (req, res) => {
     res.json(req.user); // Should return Abebe's info if token is valid
 });
 
+
 module.exports = router;
