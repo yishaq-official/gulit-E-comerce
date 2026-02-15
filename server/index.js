@@ -4,6 +4,9 @@ const dotenv= require('dotenv');
 const connectDB= require('./config/db')
 const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
+const path = require('path'); // Import path module at the top
+const uploadRoutes = require('./routes/uploadRoutes'); // Import the route
+
 
 dotenv.config();
 
@@ -21,6 +24,11 @@ connectDB();
 //routes
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/upload', uploadRoutes);
+
+
+//MAKE THE FOLDER PUBLIC
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 //port listener
 app.listen(PORT, (err)=>{
