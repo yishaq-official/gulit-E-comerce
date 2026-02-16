@@ -5,20 +5,28 @@ const HomeScreen = () => {
   return (
     <div className="space-y-12">
       {/* 🏛️ HERO SECTION */}
-      <section className="relative h-64 md:h-80 rounded-3xl overflow-hidden shadow-xl">
-        {/* The Pattern Background */}
-        <div className="absolute inset-0 bg-tibeb-pattern opacity-20"></div>
-        {/* Green Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-gulit-green to-transparent opacity-90"></div>
-        
-        <div className="relative h-full flex flex-col justify-center px-12 text-white">
-          <h1 className="text-4xl md:text-6xl font-black mb-2">Welcome to Gulit</h1>
-          <p className="text-lg md:text-xl opacity-90 max-w-lg">
-            Ethiopia's modern marketplace. Quality items from verified sellers, 
-            delivered straight to your door.
-          </p>
-        </div>
-      </section>
+      {/* 🏛️ GULIT HERO SECTION */}
+<section className="relative h-[400px] md:h-[500px] rounded-[2rem] overflow-hidden shadow-2xl mb-12 group">
+  {/* The Tibeb Pattern - Tiled across the background */}
+  <div className="absolute inset-0 bg-tibeb-pattern bg-repeat opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+  
+  {/* Green Gradient Glassmorphism Overlay */}
+  <div className="absolute inset-0 bg-gradient-to-tr from-gulit-green via-green-900/80 to-transparent"></div>
+  
+  <div className="relative h-full flex flex-col justify-center px-8 md:px-16 text-white z-10">
+    <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/20 max-w-2xl">
+      <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter">
+        Modern <span className="text-gulit-accent underline decoration-tibeb-pattern">Gulit</span>
+      </h1>
+      <p className="text-xl md:text-2xl font-light leading-relaxed mb-8 text-gray-100">
+        Quality products from verified Ethiopian sellers, delivered with tradition and trust.
+      </p>
+      <button className="bg-gulit-accent text-green-900 px-8 py-4 rounded-full font-black text-lg hover:bg-white transition-colors shadow-lg">
+        Start Shopping
+      </button>
+    </div>
+  </div>
+</section>
 
       {/* 📦 LATEST PRODUCTS */}
       <div>

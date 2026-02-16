@@ -9,46 +9,48 @@ const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
   const { userInfo } = useSelector((state) => state.auth);
 
+
   return (
-    <header className="bg-white shadow-sm py-3 px-6 flex items-center justify-between">
-      {/* 1. LOGO SECTION */}
-      <Link to="/" className="flex items-center gap-2">
-        <img src={logo} alt="Gulit Logo" className="h-12 w-auto" />
-        <span className="text-2xl font-black text-gulit-green hidden md:block">GULIT</span>
-      </Link>
-
-      {/* 2. SEARCH BAR */}
-      <div className="flex-grow max-w-md mx-8 hidden sm:block">
-        <input 
-          type="text" 
-          placeholder="Search for items, sellers..." 
-          className="w-full border-2 border-gray-100 rounded-full px-4 py-1.5 focus:border-gulit-green outline-none"
-        />
-      </div>
-
-      {/* 3. NAV ICONS */}
-      <div className="flex items-center gap-6 text-gray-600">
-        <Link to="/cart" className="relative hover:text-gulit-green">
-          <FaShoppingCart size={22} />
-          {cartItems.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-gulit-red text-white text-xs rounded-full px-1.5 py-0.5">
-              {cartItems.length}
-            </span>
-          )}
+    <header className="bg-white sticky top-0 z-50 shadow-md">
+      {/* 🇪🇹 Top Cultural Ribbon */}
+      <div className="h-2 bg-tibeb-pattern bg-repeat-x w-full border-b border-black/10"></div>
+      
+      <div className="container mx-auto py-4 px-6 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-4 group">
+          {/* Logo size increased to h-16 (64px) */}
+          <img src={logo} alt="Gulit" className="h-16 w-auto transition-transform group-hover:scale-110" />
+          <div className="flex flex-col">
+            <span className="text-3xl font-black text-green-500 leading-none">GULIT</span>
+            <span className="text-[10px] tracking-[0.2em] font-bold text-gray-400 uppercase">Modern Market</span>
+          </div>
         </Link>
 
-        {userInfo ? (
-          <Link to="/profile" className="flex items-center gap-1 hover:text-gulit-green font-medium">
-            <FaUser size={20} />
-            <span>{userInfo.name}</span>
-          </Link>
-        ) : (
-          <Link to="/login" className="hover:text-gulit-green font-medium">Login</Link>
-        )}
+        {/* Search Bar with Green Focus */}
+        <div className="flex-grow max-w-xl mx-12 hidden md:block">
+           <div className="relative">
+              <input 
+                type="text" 
+                placeholder="Find fresh products..." 
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-3 focus:border-green-400 focus:bg-white transition-all outline-none"
+              />
+           </div>
+        </div>
+
+        <div className="flex items-center gap-8">
+           <Link to="/cart" className="text-gray-700 hover:text-green-500 relative">
+              <FaShoppingCart size={26} />
+              <span className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center">3</span>
+           </Link>
+           <Link to="/login" className="bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-green-600 shadow-lg shadow-green-200 transition-all">
+              Login
+           </Link>
+        </div>
       </div>
     </header>
   );
 };
+
+
 
 export default Header;
 
