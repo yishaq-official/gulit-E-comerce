@@ -11,38 +11,47 @@ const Header = () => {
 
 
   return (
-    <header className="bg-white sticky top-0 z-50 shadow-md">
-      {/* 🇪🇹 Top Cultural Ribbon */}
-      <div className="h-2 bg-tibeb-pattern bg-repeat-x w-full border-b border-black/10"></div>
+    <header className="bg-white sticky top-0 z-50 shadow-sm">
+      {/* 🇪🇹 Top Cultural Ribbon - Made slightly thinner */}
+      <div className="h-1.5 bg-tibeb-pattern bg-repeat-x w-full border-b border-black/10 opacity-80"></div>
       
-      <div className="container mx-auto py-4 px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-4 group">
-          {/* Logo size increased to h-16 (64px) */}
-          <img src={logo} alt="Gulit" className="h-16 w-auto transition-transform group-hover:scale-110" />
-          <div className="flex flex-col">
-            <span className="text-3xl font-black text-green-500 leading-none">GULIT</span>
+      <div className="container mx-auto py-3 px-6 flex items-center justify-between">
+        
+        {/* LOGO SECTION - UPDATED */}
+        <Link to="/" className="flex items-center gap-3 group">
+          {/* 🌟 CHANGE 1: Increased logo height from h-16 to h-24 (BIGGER G) */}
+          <img 
+            src={logo} 
+            alt="Gulit Logo" 
+            className="h-24 w-auto transition-transform group-hover:scale-105 drop-shadow-sm" 
+          />
+          {/* Text stays relatively smaller so the G pops */}
+          <div className="flex flex-col justify-center">
+            <span className="text-2xl font-black text-green-500 leading-none tracking-tight">GULIT</span>
             <span className="text-[10px] tracking-[0.2em] font-bold text-gray-400 uppercase">Modern Market</span>
           </div>
         </Link>
 
-        {/* Search Bar with Green Focus */}
-        <div className="flex-grow max-w-xl mx-12 hidden md:block">
+        {/* Search Bar (Hidden on small screens) */}
+        <div className="flex-grow max-w-lg mx-12 hidden md:block">
            <div className="relative">
               <input 
                 type="text" 
-                placeholder="Find fresh products..." 
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-6 py-3 focus:border-green-400 focus:bg-white transition-all outline-none"
+                placeholder="Search for items..." 
+                className="w-full bg-gray-50 border border-gray-200 rounded-full px-5 py-2.5 focus:border-green-400 focus:bg-white focus:ring-2 focus:ring-green-100 transition-all outline-none text-sm"
               />
            </div>
         </div>
 
-        <div className="flex items-center gap-8">
-           <Link to="/cart" className="text-gray-700 hover:text-green-500 relative">
-              <FaShoppingCart size={26} />
-              <span className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center">3</span>
+        {/* Icons */}
+        <div className="flex items-center gap-6">
+           <Link to="/cart" className="text-gray-600 hover:text-green-500 relative transition-colors">
+              <FaShoppingCart size={24} />
+              {/* Add cart count badge here later */}
            </Link>
-           <Link to="/login" className="bg-green-500 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-green-600 shadow-lg shadow-green-200 transition-all">
-              Login
+           <Link to="/login" className="flex items-center gap-2 text-gray-600 hover:text-green-500 font-bold transition-colors bg-gray-50 px-4 py-2 rounded-full border border-gray-100 hover:border-green-300">
+              <FaUser size={18} />
+              <span>Login</span>
            </Link>
         </div>
       </div>
