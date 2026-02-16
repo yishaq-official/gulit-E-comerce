@@ -5,7 +5,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Components
 import Layout from './components/Layout';
-import PrivateRoute from './components/PrivateRoute';
+import PrivateRoute from './components/route/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 import SellerRoute from './components/SellerRoute';
 
