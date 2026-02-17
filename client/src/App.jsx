@@ -15,6 +15,7 @@ import HomeScreen from './pages/HomeScreen';
 import LoginScreen from './pages/LoginScreen';
 import RegisterScreen from './pages/RegisterScreen';
 import ProductDetailScreen from './pages/ProductDetailScreen';
+import ProfileScreen from './pages/ProfileScreen';
 
 const App = () => {
   return (
@@ -28,6 +29,7 @@ const App = () => {
 
           {/* 🔒 Protected Buyer Routes */}
           <Route path="" element={<PrivateRoute />}>
+          <Route path="/profile" element={<ProfileScreen />} />
             {/* Add profile, shipping, orders here later */}
           </Route>
 
