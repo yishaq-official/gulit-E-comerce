@@ -5,8 +5,6 @@ import image from '../assets/gulit.png'
 const HomeScreen = () => {
   return (
     <div className="space-y-12">
-      {/* 🏛️ HERO SECTION */}
-      {/* 🏛️ GULIT HERO SECTION */}
 {/* 🏛️ MODERN GULIT HERO */}
 <section className="relative h-[450px] flex items-center px-8 md:px-12 overflow-hidden rounded-[2.5rem] my-6 shadow-xl group">
         {/* Layer 1: Pattern (Slightly more visible now) */}
