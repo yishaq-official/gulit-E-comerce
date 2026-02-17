@@ -85,7 +85,16 @@ const loginUser = async (req, res) => {
     }
 };
 
+
+const logoutUser = (req, res) => {
+    // If you were using cookies, you would clear them here:
+    // res.cookie('jwt', '', { httpOnly: true, expires: new Date(0) });
+    
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
 module.exports = {
     registerUser,
     loginUser,
+    logoutUser,
 };
