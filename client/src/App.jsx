@@ -9,10 +9,12 @@ import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoutes';
 import SellerRoute from './components/SellerRoute';
 
+
 // Pages (We will create these next)
 import HomeScreen from './pages/HomeScreen';
 import LoginScreen from './pages/LoginScreen';
 import RegisterScreen from './pages/RegisterScreen';
+import ProductDetailScreen from './pages/ProductDetailScreen';
 
 const App = () => {
   return (
@@ -38,6 +40,7 @@ const App = () => {
           <Route path="" element={<AdminRoute />}>
             {/* Add user management and analytics here later */}
           </Route>
+          <Route path="/product/:id" element={<ProductDetailScreen />} />
         </Routes>
       </Layout>
       <ToastContainer position="top-right" autoClose={3000} />
