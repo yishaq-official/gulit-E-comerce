@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaShoppingCart, FaStar } from 'react-icons/fa';
+import { BASE_URL } from '../store/slices/apiSlice';
 
 const ProductCard = ({ product }) => {
   return (
@@ -11,9 +12,9 @@ const ProductCard = ({ product }) => {
         <div className="absolute inset-0 bg-tibeb-pattern opacity-5 group-hover:opacity-10 transition-opacity z-10"></div>
         
         <img 
-          src={product.image} 
-          alt={product.name} 
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            src={`${BASE_URL}${product.image}`} 
+            alt={product.name} 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         
         {/* Category Tag */}
