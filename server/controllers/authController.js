@@ -93,8 +93,44 @@ const logoutUser = (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
+
+
+const updateUserProfile = async (req, res) => {
+    // req.user is already there because of the 'protect' middleware
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        // Update fields OR keep existing ones
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+
+        // Only hash/update password if the user actually sent a new one
+        if (req.body.password) {
+            user.password = req.body.password; 
+            // Note: Your User model's "pre-save" hook will automatically hash this!
+        }
+
+        const updatedUser = await user.save();
+
+        // Send back the fresh data (so the frontend updates immediately)
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            isAdmin: updatedUser.isAdmin, // or role
+            role: updatedUser.role,       // Keep role consistent
+        });
+    } else {
+        res.status(404);
+        throw new Error('User not found');
+    }
+};
+
+
+
 module.exports = {
     registerUser,
     loginUser,
     logoutUser,
+    updateUserProfile,
 };
