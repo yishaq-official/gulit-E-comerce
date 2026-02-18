@@ -1,8 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
+// 👇 Import the helper
+import { updateCart } from '../../utils/cartUtils';
 
 const initialState = localStorage.getItem('cart')
   ? JSON.parse(localStorage.getItem('cart'))
-  : { cartItems: [], shippingAddress: {}, paymentMethod: 'Chapa' };
+  : { cartItems: [], shippingAddress: {}, paymentMethod: 'Chapa' }; // Default to Chapa
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -20,13 +22,13 @@ const cartSlice = createSlice({
         state.cartItems = [...state.cartItems, item];
       }
       
-      // Calculate prices (Item price + Shipping + Tax)
-      // We'll add helper functions for this later
-      localStorage.setItem('cart', JSON.stringify(state));
+      // 👇 Use the helper (Calculates prices + Saves to LocalStorage)
+      return updateCart(state);
     },
     removeFromCart: (state, action) => {
       state.cartItems = state.cartItems.filter((x) => x._id !== action.payload);
-      localStorage.setItem('cart', JSON.stringify(state));
+      // 👇 Use the helper here too
+      return updateCart(state);
     },
     saveShippingAddress: (state, action) => {
       state.shippingAddress = action.payload;
@@ -43,5 +45,12 @@ const cartSlice = createSlice({
   },
 });
 
-export const { addToCart, removeFromCart, saveShippingAddress, savePaymentMethod, clearCartItems } = cartSlice.actions;
+export const { 
+  addToCart, 
+  removeFromCart, 
+  saveShippingAddress, 
+  savePaymentMethod, 
+  clearCartItems 
+} = cartSlice.actions;
+
 export default cartSlice.reducer;
