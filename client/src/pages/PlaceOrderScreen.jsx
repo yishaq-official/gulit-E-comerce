@@ -60,6 +60,9 @@ const PlaceOrderScreen = () => {
                <strong>Address: </strong>
                {cart.shippingAddress.address}, {cart.shippingAddress.city}, {cart.shippingAddress.country}
              </p>
+             <p className="text-gray-600 mt-1">
+                <strong>Phone: </strong> {cart.shippingAddress.phoneNumber}
+            </p>
           </div>
 
           {/* Payment Info */}
