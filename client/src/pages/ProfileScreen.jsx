@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { FaUser, FaSave, FaBoxOpen, FaMapMarkerAlt, FaLock } from 'react-icons/fa';
+import { useGetMyOrdersQuery } from '../store/slices/ordersApiSlice';
+import { FaTimes } from 'react-icons/fa'; // For 'X' icon if not paid
 // 👇 Import the API hook and Redux action
 import { useProfileMutation } from '../store/slices/usersApiSlice';
 import { setCredentials } from '../store/slices/authSlice';
@@ -13,6 +15,7 @@ const ProfileScreen = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [activeTab, setActiveTab] = useState('settings'); // 'settings', 'orders', 'address'
+  const { data: orders, isLoading: loadingOrders, error: errorOrders } = useGetMyOrdersQuery();
 
   const { userInfo } = useSelector((state) => state.auth);
   
@@ -172,25 +175,72 @@ const ProfileScreen = () => {
                )}
 
                {/* TAB: ORDERS */}
-               {activeTab === 'orders' && (
-                 <div className="relative z-10">
-                    <h2 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2">Order History</h2>
-                    {myOrders.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
-                           <FaBoxOpen className="text-green-300 text-2xl" />
-                        </div>
-                        <h3 className="font-bold text-gray-800 mb-1">No orders yet</h3>
-                        <p className="text-gray-400 text-sm mb-6">Looks like you haven't bought anything.</p>
-                        <button className="bg-green-500 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-600 transition-colors">
-                          Start Shopping
-                        </button>
-                      </div>
-                    ) : (
-                      <div>{/* Order list will be mapped here later */}</div>
-                    )}
-                 </div>
-               )}
+{activeTab === 'orders' && (
+  <div className="relative z-10">
+    <h2 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2">Order History</h2>
+    
+    {loadingOrders ? (
+      <Loader />
+    ) : errorOrders ? (
+      <div className="bg-red-50 text-red-500 p-4 rounded-xl">{errorOrders?.data?.message || errorOrders.error}</div>
+    ) : orders.length === 0 ? (
+      <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+        <FaBoxOpen className="text-gray-300 text-4xl mb-3" />
+        <p className="text-gray-500 font-medium">No orders yet.</p>
+        <button className="bg-green-500 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-600 transition-colors mt-4">
+          Start Shopping
+        </button>
+      </div>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="text-xs text-gray-400 uppercase border-b border-gray-100">
+              <th className="p-3">ID</th>
+              <th className="p-3">Date</th>
+              <th className="p-3">Total</th>
+              <th className="p-3">Paid</th>
+              <th className="p-3">Delivered</th>
+              <th className="p-3"></th>
+            </tr>
+          </thead>
+          <tbody className="text-sm">
+            {orders.map((order) => (
+              <tr key={order._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                <td className="p-3 font-mono text-xs">{order._id.substring(0, 10)}...</td>
+                <td className="p-3">{order.createdAt.substring(0, 10)}</td>
+                <td className="p-3 font-bold">{order.totalPrice} ETB</td>
+                <td className="p-3">
+                  {order.isPaid ? (
+                    <span className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs font-bold">
+                      {order.paidAt.substring(0, 10)}
+                    </span>
+                  ) : (
+                    <span className="bg-red-100 text-red-500 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 w-fit">
+                      <FaTimes /> Not Paid
+                    </span>
+                  )}
+                </td>
+                <td className="p-3">
+                  {order.isDelivered ? (
+                    <span className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs font-bold">
+                      Delivered
+                    </span>
+                  ) : (
+                    <span className="text-gray-400 text-xs font-bold">Processing</span>
+                  )}
+                </td>
+                <td className="p-3">
+                  <button className="text-green-600 hover:underline font-bold text-xs">Details</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+)}
 
                {/* TAB: ADDRESS BOOK (Placeholder) */}
                {activeTab === 'address' && (
