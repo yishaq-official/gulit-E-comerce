@@ -280,6 +280,7 @@ const ProfileScreen = () => {
                     {shippingAddress.city}, {shippingAddress.country}
                  </h3>
                  <p className="text-gray-600 font-medium pl-6">{shippingAddress.address}</p>
+                 <p className="text-gray-600 font-bold pl-6 text-sm">📞 {shippingAddress.phoneNumber}</p>
                  <p className="text-gray-500 text-sm pl-6">Postal Code: {shippingAddress.postalCode}</p>
               </div>
               
