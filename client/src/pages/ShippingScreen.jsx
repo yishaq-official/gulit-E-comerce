@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { saveShippingAddress } from '../store/slices/cartSlice';
 import CheckoutSteps from '../components/CheckoutSteps';
-import { FaMapMarkerAlt, FaCity, FaGlobeAfrica } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCity, FaGlobeAfrica, FaPhoneAlt } from 'react-icons/fa';
 
 const ShippingScreen = () => {
   const cart = useSelector((state) => state.cart);
@@ -55,7 +55,7 @@ const ShippingScreen = () => {
                     />
                  </div>
               </div>
-              
+
               {/* Address */}
               <div>
                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Street Address / Kebele</label>
