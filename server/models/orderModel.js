@@ -18,6 +18,9 @@ const orderSchema = mongoose.Schema(
           required: true,
           ref: 'Product',
         },
+        seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
+        platformFee: { type: Number },
+        sellerRevenue: { type: Number },
       },
     ],
     shippingAddress: {
