@@ -22,15 +22,22 @@ const addOrderItems = async (req, res) => {
         // 2. 🧮 CALCULATE COMMISSION PER ITEM
         // We map through the items to add the financial split
         const calculatedItems = orderItems.map((item) => {
-            const amount = item.price * item.qty;
-            return {
-                ...item, // Keep name, image, etc.
-                product: item.product,
-                seller: item.seller, // Ensure frontend sends this!
-                platformFee: amount * 0.10, // 10% for You
-                sellerRevenue: amount * 0.90 // 90% for Seller
-            };
-        });
+      return {
+        name: item.name,
+        qty: item.qty,
+        image: item.image,
+        price: item.price,
+        // 1. Map '_id' from cart to 'product' for Order Schema
+        product: item._id, 
+        // 2. Map 'user' (or 'seller') from cart to 'seller' for Order Schema
+        // We use || to be safe in case your product object names it differently
+        seller: item.user || item.seller, 
+        
+        // 3. Calculate fees (Safety check: ensure numbers exist)
+        platformFee: (item.price * item.qty) * 0.10,
+        sellerRevenue: (item.price * item.qty) * 0.90
+      };
+    });
 
         // 3. Create the Order
         const order = new Order({
