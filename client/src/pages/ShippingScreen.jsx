@@ -14,6 +14,7 @@ const ShippingScreen = () => {
   const [city, setCity] = useState(shippingAddress?.city || '');
   const [postalCode, setPostalCode] = useState(shippingAddress?.postalCode || '');
   const [country, setCountry] = useState(shippingAddress?.country || 'Ethiopia');
+  const [phoneNumber, setPhoneNumber] = useState(shippingAddress?.phoneNumber || '');
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const ShippingScreen = () => {
   const submitHandler = (e) => {
     e.preventDefault();
     // 1. Save to Redux State (and LocalStorage via helper)
-    dispatch(saveShippingAddress({ address, city, postalCode, country }));
+    dispatch(saveShippingAddress({ address, city, postalCode, country, phoneNumber }));
     // 2. Move to Payment Step
     navigate('/payment');
   };
@@ -39,6 +40,22 @@ const ShippingScreen = () => {
            <p className="text-gray-500 mb-8">Where should we send your order?</p>
 
            <form onSubmit={submitHandler} className="space-y-6 relative z-10">
+
+              <div>
+                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Phone Number (For Post Office)</label>
+                 <div className="relative">
+                    <FaPhoneAlt className="absolute left-4 top-4 text-gray-300" />
+                    <input 
+                      type="text"
+                      placeholder="e.g. 0911234567"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      required
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 font-medium focus:border-green-500 outline-none transition-colors"
+                    />
+                 </div>
+              </div>
+              
               {/* Address */}
               <div>
                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Street Address / Kebele</label>
