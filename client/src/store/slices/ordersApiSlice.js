@@ -1,15 +1,15 @@
-import { apiSlice, BASE_URL } from './apiSlice';
+import { apiSlice } from './apiSlice';
 
 export const ordersApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-
     createOrder: builder.mutation({
       query: (order) => ({
         url: '/api/orders',
         method: 'POST',
         body: { ...order },
       }),
-    // Hook to fetch my orders
+    }),
+
     getMyOrders: builder.query({
       query: () => ({
         url: '/api/orders/myorders',
@@ -29,9 +29,13 @@ export const ordersApiSlice = apiSlice.injectEndpoints({
         method: 'PUT',
         body: { ...details },
       }),
+    }),
   }),
-}),
-  })
 });
 
-export const { useCreateOrderMutation, useGetMyOrdersQuery, useGetOrderDetailsQuery, usePayOrderMutation } = ordersApiSlice;
+export const {
+  useCreateOrderMutation,
+  useGetMyOrdersQuery,
+  useGetOrderDetailsQuery,
+  usePayOrderMutation,
+} = ordersApiSlice;
