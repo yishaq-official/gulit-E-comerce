@@ -52,6 +52,7 @@ const OrderScreen = () => {
                <p className="text-gray-600 mb-4">
                  <strong className="text-gray-900">Name:</strong> {order.user.name} <br/>
                  <strong className="text-gray-900">Email:</strong> <a href={`mailto:${order.user.email}`} className="underline">{order.user.email}</a> <br/>
+                 <strong className="text-gray-900">Phone:</strong> {order.shippingAddress.phoneNumber} <br/>
                  <strong className="text-gray-900">Address:</strong> {order.shippingAddress.address}, {order.shippingAddress.city}, {order.shippingAddress.country}
                </p>
                {order.isDelivered ? (
