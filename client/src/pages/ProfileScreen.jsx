@@ -4,12 +4,16 @@ import { toast } from 'react-toastify';
 import { FaUser, FaSave, FaBoxOpen, FaMapMarkerAlt, FaLock } from 'react-icons/fa';
 import { useGetMyOrdersQuery } from '../store/slices/ordersApiSlice';
 import { FaTimes } from 'react-icons/fa'; // For 'X' icon if not paid
+import { useNavigate } from 'react-router-dom';
 // 👇 Import the API hook and Redux action
 import { useProfileMutation } from '../store/slices/usersApiSlice';
 import { setCredentials } from '../store/slices/authSlice';
 import Loader from '../components/Loader';
 
 const ProfileScreen = () => {
+  const navigate = useNavigate();
+
+  const { shippingAddress } = useSelector((state) => state.cart);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +22,7 @@ const ProfileScreen = () => {
   const { data: orders, isLoading: loadingOrders, error: errorOrders } = useGetMyOrdersQuery();
 
   const { userInfo } = useSelector((state) => state.auth);
+  
   
   // 👇 Initialize the update mutation
   const [updateProfile, { isLoading }] = useProfileMutation();
@@ -242,17 +247,64 @@ const ProfileScreen = () => {
   </div>
 )}
 
-               {/* TAB: ADDRESS BOOK (Placeholder) */}
-               {activeTab === 'address' && (
-                  <div className="relative z-10">
-                     <h2 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2">Address Book</h2>
-                     <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                        <FaMapMarkerAlt className="text-gray-300 text-4xl mb-3" />
-                        <p className="text-gray-500 font-medium">No addresses saved.</p>
-                        <p className="text-xs text-gray-400 mt-1">Addresses are saved automatically during checkout.</p>
-                     </div>
-                  </div>
-               )}
+               {/* TAB: ADDRESS BOOK */}
+{activeTab === 'address' && (
+  <div className="relative z-10">
+     <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-2">
+        <h2 className="text-xl font-bold text-gray-800">Address Book</h2>
+        {shippingAddress?.address && (
+           <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+              Default Active
+           </span>
+        )}
+     </div>
+
+     {!shippingAddress || !shippingAddress.address ? (
+        <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+           <FaMapMarkerAlt className="text-gray-300 text-4xl mb-3" />
+           <p className="text-gray-500 font-medium">No addresses saved.</p>
+           <button 
+              onClick={() => navigate('/shipping')}
+              className="mt-4 text-green-600 font-bold hover:underline text-sm"
+           >
+              + Add New Address
+           </button>
+        </div>
+     ) : (
+        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 group hover:border-green-400 transition-colors">
+           <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Shipping Address</p>
+                 <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                    <FaMapMarkerAlt className="text-green-500" />
+                    {shippingAddress.city}, {shippingAddress.country}
+                 </h3>
+                 <p className="text-gray-600 font-medium pl-6">{shippingAddress.address}</p>
+                 <p className="text-gray-500 text-sm pl-6">Postal Code: {shippingAddress.postalCode}</p>
+              </div>
+              
+              <button 
+                 onClick={() => navigate('/shipping')}
+                 className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all"
+              >
+                 Edit
+              </button>
+           </div>
+           
+           <div className="mt-6 pt-4 border-t border-gray-200/50 flex gap-4">
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                 Postal Delivery
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                 Verified Location
+              </div>
+           </div>
+        </div>
+     )}
+  </div>
+)}
             </div>
           </div>
         </div>
