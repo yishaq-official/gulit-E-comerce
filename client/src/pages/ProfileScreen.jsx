@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { FaUser, FaSave, FaBoxOpen, FaMapMarkerAlt, FaLock } from 'react-icons/fa';
+import { FaUser, FaSave, FaBoxOpen, FaMapMarkerAlt, FaLock, FaTimes } from 'react-icons/fa';
 import { useGetMyOrdersQuery } from '../store/slices/ordersApiSlice';
-import { FaTimes } from 'react-icons/fa'; // For 'X' icon if not paid
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+
 // 👇 Import the API hook and Redux action
 import { useProfileMutation } from '../store/slices/usersApiSlice';
 import { setCredentials } from '../store/slices/authSlice';
@@ -12,24 +13,33 @@ import Loader from '../components/Loader';
 
 const ProfileScreen = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
+  // 1. URL Parameter Logic (Fixes the blank page issue)
+  const { search } = useLocation();
+  const sp = new URLSearchParams(search);
+  const tabParam = sp.get('tab');
 
-  const { shippingAddress } = useSelector((state) => state.cart);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [activeTab, setActiveTab] = useState('settings'); // 'settings', 'orders', 'address'
-  const { data: orders, isLoading: loadingOrders, error: errorOrders } = useGetMyOrdersQuery();
+  // Set default tab based on URL or default to 'settings'
+  const [activeTab, setActiveTab] = useState(tabParam || 'settings');
 
   const { userInfo } = useSelector((state) => state.auth);
+  const { shippingAddress } = useSelector((state) => state.cart);
   
-  
-  // 👇 Initialize the update mutation
+  // API Hooks
+  const { data: orders, isLoading: loadingOrders, error: errorOrders } = useGetMyOrdersQuery();
   const [updateProfile, { isLoading }] = useProfileMutation();
-  const dispatch = useDispatch();
 
-  // Placeholder for future order history data
-  const myOrders = []; 
+  // Watch for URL changes to switch tabs automatically
+  useEffect(() => {
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   // Populate form with existing user data on load
   useEffect(() => {
@@ -45,7 +55,6 @@ const ProfileScreen = () => {
       toast.error('Passwords do not match');
     } else {
       try {
-        // 👇 Call the API endpoint
         const res = await updateProfile({
           _id: userInfo._id,
           name,
@@ -53,12 +62,8 @@ const ProfileScreen = () => {
           password,
         }).unwrap();
         
-        // 👇 Update local Redux state (Header updates immediately)
         dispatch(setCredentials({ ...res }));
-        
         toast.success('Profile updated successfully');
-        
-        // Clear password fields for security
         setPassword('');
         setConfirmPassword('');
       } catch (err) {
@@ -180,132 +185,134 @@ const ProfileScreen = () => {
                )}
 
                {/* TAB: ORDERS */}
-{activeTab === 'orders' && (
-  <div className="relative z-10">
-    <h2 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2">Order History</h2>
-    
-    {loadingOrders ? (
-      <Loader />
-    ) : errorOrders ? (
-      <div className="bg-red-50 text-red-500 p-4 rounded-xl">{errorOrders?.data?.message || errorOrders.error}</div>
-    ) : orders.length === 0 ? (
-      <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-        <FaBoxOpen className="text-gray-300 text-4xl mb-3" />
-        <p className="text-gray-500 font-medium">No orders yet.</p>
-        <button className="bg-green-500 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-600 transition-colors mt-4">
-          Start Shopping
-        </button>
-      </div>
-    ) : (
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="text-xs text-gray-400 uppercase border-b border-gray-100">
-              <th className="p-3">ID</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Total</th>
-              <th className="p-3">Paid</th>
-              <th className="p-3">Delivered</th>
-              <th className="p-3"></th>
-            </tr>
-          </thead>
-          <tbody className="text-sm">
-            {orders.map((order) => (
-              <tr key={order._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                <td className="p-3 font-mono text-xs">{order._id.substring(0, 10)}...</td>
-                <td className="p-3">{order.createdAt.substring(0, 10)}</td>
-                <td className="p-3 font-bold">{order.totalPrice} ETB</td>
-                <td className="p-3">
-                  {order.isPaid ? (
-                    <span className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs font-bold">
-                      {order.paidAt.substring(0, 10)}
-                    </span>
-                  ) : (
-                    <span className="bg-red-100 text-red-500 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 w-fit">
-                      <FaTimes /> Not Paid
-                    </span>
-                  )}
-                </td>
-                <td className="p-3">
-                  {order.isDelivered ? (
-                    <span className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs font-bold">
-                      Delivered
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 text-xs font-bold">Processing</span>
-                  )}
-                </td>
-                <td className="p-3">
-                  <button className="text-green-600 hover:underline font-bold text-xs">Details</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-  </div>
-)}
+               {activeTab === 'orders' && (
+                 <div className="relative z-10">
+                    <h2 className="text-xl font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2">Order History</h2>
+                    
+                    {loadingOrders ? (
+                      <Loader />
+                    ) : errorOrders ? (
+                      <div className="bg-red-50 text-red-500 p-4 rounded-xl">{errorOrders?.data?.message || errorOrders.error}</div>
+                    ) : orders.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                        <FaBoxOpen className="text-gray-300 text-4xl mb-3" />
+                        <p className="text-gray-500 font-medium">No orders yet.</p>
+                        <Link to="/" className="bg-green-500 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-green-600 transition-colors mt-4">
+                          Start Shopping
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="text-xs text-gray-400 uppercase border-b border-gray-100">
+                              <th className="p-3">ID</th>
+                              <th className="p-3">Date</th>
+                              <th className="p-3">Total</th>
+                              <th className="p-3">Paid</th>
+                              <th className="p-3">Delivered</th>
+                              <th className="p-3"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-sm">
+                            {orders.map((order) => (
+                              <tr key={order._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                <td className="p-3 font-mono text-xs">{order._id.substring(0, 10)}...</td>
+                                <td className="p-3">{order.createdAt.substring(0, 10)}</td>
+                                <td className="p-3 font-bold">{order.totalPrice} ETB</td>
+                                <td className="p-3">
+                                  {order.isPaid ? (
+                                    <span className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs font-bold">
+                                      {order.paidAt.substring(0, 10)}
+                                    </span>
+                                  ) : (
+                                    <span className="bg-red-100 text-red-500 px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 w-fit">
+                                      <FaTimes /> Not Paid
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="p-3">
+                                  {order.isDelivered ? (
+                                    <span className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs font-bold">
+                                      Delivered
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs font-bold">Processing</span>
+                                  )}
+                                </td>
+                                <td className="p-3">
+                                  <Link to={`/order/${order._id}`} className="text-green-600 hover:underline font-bold text-xs">
+                                    Details
+                                  </Link>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                 </div>
+               )}
 
                {/* TAB: ADDRESS BOOK */}
-{activeTab === 'address' && (
-  <div className="relative z-10">
-     <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-2">
-        <h2 className="text-xl font-bold text-gray-800">Address Book</h2>
-        {shippingAddress?.address && (
-           <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
-              Default Active
-           </span>
-        )}
-     </div>
+               {activeTab === 'address' && (
+                 <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-2">
+                       <h2 className="text-xl font-bold text-gray-800">Address Book</h2>
+                       {shippingAddress?.address && (
+                          <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                             Default Active
+                          </span>
+                       )}
+                    </div>
 
-     {!shippingAddress || !shippingAddress.address ? (
-        <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-           <FaMapMarkerAlt className="text-gray-300 text-4xl mb-3" />
-           <p className="text-gray-500 font-medium">No addresses saved.</p>
-           <button 
-              onClick={() => navigate('/shipping')}
-              className="mt-4 text-green-600 font-bold hover:underline text-sm"
-           >
-              + Add New Address
-           </button>
-        </div>
-     ) : (
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 group hover:border-green-400 transition-colors">
-           <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Shipping Address</p>
-                 <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
-                    <FaMapMarkerAlt className="text-green-500" />
-                    {shippingAddress.city}, {shippingAddress.country}
-                 </h3>
-                 <p className="text-gray-600 font-medium pl-6">{shippingAddress.address}</p>
-                 <p className="text-gray-600 font-bold pl-6 text-sm">📞 {shippingAddress.phoneNumber}</p>
-                 <p className="text-gray-500 text-sm pl-6">Postal Code: {shippingAddress.postalCode}</p>
-              </div>
-              
-              <button 
-                 onClick={() => navigate('/shipping')}
-                 className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all"
-              >
-                 Edit
-              </button>
-           </div>
-           
-           <div className="mt-6 pt-4 border-t border-gray-200/50 flex gap-4">
-              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
-                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                 Postal Delivery
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
-                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                 Verified Location
-              </div>
-           </div>
-        </div>
-     )}
-  </div>
-)}
+                    {!shippingAddress || !shippingAddress.address ? (
+                       <div className="flex flex-col items-center justify-center py-16 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                          <FaMapMarkerAlt className="text-gray-300 text-4xl mb-3" />
+                          <p className="text-gray-500 font-medium">No addresses saved.</p>
+                          <button 
+                             onClick={() => navigate('/shipping')}
+                             className="mt-4 text-green-600 font-bold hover:underline text-sm"
+                          >
+                             + Add New Address
+                          </button>
+                       </div>
+                    ) : (
+                       <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 group hover:border-green-400 transition-colors">
+                          <div className="flex items-start justify-between">
+                             <div className="space-y-1">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Shipping Address</p>
+                                <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">
+                                   <FaMapMarkerAlt className="text-green-500" />
+                                   {shippingAddress.city}, {shippingAddress.country}
+                                </h3>
+                                <p className="text-gray-600 font-medium pl-6">{shippingAddress.address}</p>
+                                <p className="text-gray-600 font-bold pl-6 text-sm">📞 {shippingAddress.phoneNumber}</p>
+                                <p className="text-gray-500 text-sm pl-6">Postal Code: {shippingAddress.postalCode}</p>
+                             </div>
+                             
+                             <button 
+                                onClick={() => navigate('/shipping')}
+                                className="bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all"
+                              >
+                                Edit
+                             </button>
+                          </div>
+                          
+                          <div className="mt-6 pt-4 border-t border-gray-200/50 flex gap-4">
+                             <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                Postal Delivery
+                             </div>
+                             <div className="flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+                                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Verified Location
+                             </div>
+                          </div>
+                       </div>
+                    )}
+                 </div>
+               )}
             </div>
           </div>
         </div>
