@@ -7,6 +7,7 @@ const productRoutes = require('./routes/productRoutes');
 const path = require('path'); // Import path module at the top
 const uploadRoutes = require('./routes/uploadRoutes'); 
 const orderRoutes = require('./routes/orderRoutes');
+const sellerRoutes = require('./routes/sellerRoutes');
 
 
 dotenv.config();
@@ -27,6 +28,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/orders', orderRoutes); // Use
+
+//sellers routes
+app.use('/api/sellers', sellerRoutes);
+
 
 
 //MAKE THE FOLDER PUBLIC
