@@ -4,14 +4,16 @@ const Product = require('../models/productModel');
 // @route   GET /api/products
 // @access  Public
 const getProducts = async (req, res) => {
-    try {
-        const products = await Product.find({});
-        res.json(products);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
-};
+    // 1. Check if the frontend sent a search word
+    const keyword = req.query.keyword 
+        ? { name: { $regex: req.query.keyword, $options: 'i' } } // 'i' means case-insensitive
+        : {};
 
+    // 2. Find products that match the keyword (or all if no keyword)
+    const products = await Product.find({ ...keyword });
+    
+    res.json(products);
+};
 // @desc    Fetch single product
 // @route   GET /api/products/:id
 // @access  Public
