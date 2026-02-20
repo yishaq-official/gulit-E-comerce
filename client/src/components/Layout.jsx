@@ -1,6 +1,8 @@
 import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
+import { Outlet } from 'react-router-dom';
+
 
 const Layout = ({ children }) => {
   return (
@@ -11,7 +13,7 @@ const Layout = ({ children }) => {
       <div className="h-1.5 bg-tibeb-pattern bg-repeat-x w-full"></div>
 
       <main className="flex-grow container mx-auto px-4 py-8">
-        {children}
+        <Outlet />
       </main>
 
       {/* Another Tibeb strip above the footer */}
