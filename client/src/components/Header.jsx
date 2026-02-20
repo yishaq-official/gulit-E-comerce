@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import logo from '../assets/gulit.png';
 import { FaShoppingCart, FaUser } from 'react-icons/fa';
 import AccountMenu from './AccountMenu'; // 👈 Import the new component
+import SearchBox from './SearchBox';
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
@@ -31,13 +32,7 @@ const Header = () => {
 
         {/* SEARCH BAR (Middle) */}
         <div className="flex-grow max-w-lg mx-12 hidden md:block">
-           <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Search for items..." 
-                className="w-full bg-gray-50 border border-gray-200 rounded-full px-5 py-2.5 focus:border-green-400 focus:bg-white transition-all outline-none text-sm"
-              />
-           </div>
+           <SearchBox /> 
         </div>
 
         {/* ICONS (Right) */}
