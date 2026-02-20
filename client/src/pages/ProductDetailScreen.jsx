@@ -1,235 +1,237 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useGetProductDetailsQuery } from '../store/slices/productsApiSlice';
+import { useGetProductDetailsQuery, useCreateReviewMutation } from '../store/slices/productsApiSlice';
 import { addToCart } from '../store/slices/cartSlice';
-import { FaChevronLeft, FaShoppingCart, FaBolt, FaTruck, FaBoxOpen, FaInfoCircle } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import Loader from '../components/Loader';
-import Rating from '../components/Rating';
+import { FaStar, FaShoppingCart, FaArrowLeft, FaCheckCircle, FaUserCircle } from 'react-icons/fa';
 import { BASE_URL } from '../store/slices/apiSlice';
 
 const ProductDetailScreen = () => {
   const { id: productId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [qty, setQty] = useState(1);
-  const [activeTab, setActiveTab] = useState('desc'); // Tabs: 'desc' or 'reviews'
 
-  const { data: product, isLoading, error } = useGetProductDetailsQuery(productId);
+  const [qty, setQty] = useState(1);
+  const [activeImage, setActiveImage] = useState(''); // State for Image Slider
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+
   const { userInfo } = useSelector((state) => state.auth);
 
-  // 🛒 Standard Add to Cart
+  const { data: product, isLoading, error, refetch } = useGetProductDetailsQuery(productId);
+  const [createReview, { isLoading: loadingProductReview }] = useCreateReviewMutation();
+
   const addToCartHandler = () => {
     dispatch(addToCart({ ...product, qty }));
-    // Optional: Show success toast here
+    navigate('/cart');
   };
 
-  // ⚡ Order Now (Skips Cart, goes to Login/Shipping)
-  const orderNowHandler = () => {
-    dispatch(addToCart({ ...product, qty }));
-    // If logged in, go to shipping. If not, go to login then shipping.
-    navigate('/login?redirect=/shipping');
+  const submitReviewHandler = async (e) => {
+    e.preventDefault();
+    try {
+      await createReview({ productId, rating, comment }).unwrap();
+      refetch();
+      toast.success('Review Submitted!');
+      setRating(0);
+      setComment('');
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
   };
 
   if (isLoading) return <Loader />;
-  if (error) return <div className="p-10 text-red-500 font-bold">{error?.data?.message || error.error}</div>;
+  if (error) return <div className="text-red-500 font-bold p-10">{error?.data?.message || error.error}</div>;
+
+  // Combine main image and additional images into one array for the slider
+  const allImages = [product.image, ...(product.images || [])];
+  const currentDisplayImage = activeImage || product.image;
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-20">
-      {/* Breadcrumb / Back */}
-      <div className="container mx-auto px-4 py-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-green-500 font-bold transition-colors mb-4">
-          <FaChevronLeft size={12} /> Back to Market
+    <div className="min-h-screen bg-gray-50 py-10 px-4">
+      <div className="container mx-auto max-w-6xl">
+        <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-green-500 font-bold mb-8 transition-colors">
+          <FaArrowLeft size={12} /> Back to Market
         </Link>
-      </div>
 
-      <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-10">
-        
-        {/* 🖼️ LEFT: IMAGE GALLERY (Col Span 5) */}
-        <div className="lg:col-span-5">
-          <div className="bg-white p-2 rounded-[2rem] shadow-sm border border-gray-100 relative group overflow-hidden">
-             {/* Tibeb Accent Overlay */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-tibeb-pattern opacity-20 rounded-bl-full z-10 pointer-events-none"></div>
+        {/* TOP SECTION: Product Info & Slider */}
+        <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
             
-            <img 
-              src={`${BASE_URL}${product.image}`} 
-              alt={product.name} 
-              className="w-full h-[400px] md:h-[500px] object-cover rounded-[1.8rem] group-hover:scale-105 transition-transform duration-700"
-            />
-          </div>
-        </div>
-
-        {/* 📝 MIDDLE: PRODUCT INFO (Col Span 4) */}
-        <div className="lg:col-span-4 space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-               <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                 {product.category}
-               </span>
-               {product.countInStock > 0 ? (
-                 <span className="text-green-600 text-xs font-bold flex items-center gap-1"><FaBoxOpen/> In Stock</span>
-               ) : (
-                 <span className="text-red-500 text-xs font-bold">Out of Stock</span>
-               )}
-            </div>
-            
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-2">
-              {product.name}
-            </h1>
-            
-            {/* Rating Component */}
-            <div className="flex items-center gap-4 mb-4">
-               <Rating value={product.rating} text={`${product.numReviews} reviews`} />
-               <span className="text-gray-300">|</span>
-               <span className="text-sm text-gray-500">Sold by <strong className="text-green-600 underline">Gulit Official</strong></span>
-            </div>
-
-            <div className="flex items-baseline gap-3">
-               <span className="text-4xl font-black text-gray-900">{product.price} <span className="text-lg">ETB</span></span>
-               {/* Mock "Old Price" for psychological effect */}
-               <span className="text-lg text-gray-400 line-through font-bold">{Math.round(product.price * 1.15)} ETB</span>
-            </div>
-          </div>
-
-          <div className="border-t border-b border-gray-200 py-6">
-            <p className="text-gray-600 leading-relaxed text-sm">
-              {product.description}
-            </p>
-          </div>
-
-          {/* 🚚 DELIVERY & POSTAL INFO */}
-          <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex gap-4 items-start">
-             <div className="bg-white p-2 rounded-full text-blue-500 shadow-sm"><FaTruck /></div>
-             <div>
-                <h4 className="font-bold text-gray-800 text-sm">Postal Delivery (EMS)</h4>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                   Delivered via <strong>Ethiopian Postal Service</strong> to your nearest post office. 
-                   Tracking number provided upon dispatch. Estimated time: <strong>3-5 Days</strong>.
-                </p>
-             </div>
-          </div>
-        </div>
-
-        {/* 🛒 RIGHT: ACTION CARD (Col Span 3) */}
-        <div className="lg:col-span-3">
-           <div className="bg-white p-6 rounded-3xl shadow-xl shadow-gray-100 border border-gray-100 sticky top-24">
-              <div className="flex justify-between items-center mb-6">
-                 <span className="font-bold text-gray-600">Total Price:</span>
-                 <span className="text-2xl font-black text-gray-900">{(product.price * qty).toFixed(2)}</span>
+            {/* LEFT: Image Slider */}
+            <div className="p-8 bg-gray-50 flex flex-col items-center border-r border-gray-100">
+              {/* Main Active Image */}
+              <div className="w-full aspect-square bg-white rounded-2xl border border-gray-200 overflow-hidden mb-4 shadow-sm">
+                 <img 
+                   src={`${BASE_URL}${currentDisplayImage}`} 
+                   alt={product.name} 
+                   className="w-full h-full object-contain p-4"
+                 />
               </div>
-
-              {product.countInStock > 0 && (
-                <div className="mb-6">
-                  <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Quantity</label>
-                  <select 
-                    value={qty} 
-                    onChange={(e) => setQty(Number(e.target.value))}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 focus:outline-none focus:border-green-500"
-                  >
-                    {[...Array(product.countInStock).keys()].map((x) => (
-                      <option key={x + 1} value={x + 1}>{x + 1}</option>
-                    ))}
-                  </select>
+              
+              {/* Thumbnails */}
+              {allImages.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-2 w-full justify-center">
+                  {allImages.map((img, index) => (
+                    <button 
+                      key={index} 
+                      onClick={() => setActiveImage(img)}
+                      className={`w-16 h-16 rounded-xl border-2 overflow-hidden flex-shrink-0 transition-all ${currentDisplayImage === img ? 'border-green-500 shadow-md scale-105' : 'border-transparent hover:border-green-200'}`}
+                    >
+                       <img src={`${BASE_URL}${img}`} alt="thumbnail" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
                 </div>
               )}
+            </div>
 
-              <div className="space-y-3">
-                 {/* ⚡ ORDER NOW BUTTON */}
-                 <button 
-                   onClick={orderNowHandler}
-                   disabled={product.countInStock === 0}
-                   className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all active:scale-95 disabled:bg-gray-300"
-                 >
-                    <FaBolt /> ORDER NOW
-                 </button>
+            {/* RIGHT: Details & Actions */}
+            <div className="p-8 md:p-12 flex flex-col">
+              <span className="text-xs font-bold text-green-600 uppercase tracking-widest mb-2">{product.brand}</span>
+              <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight mb-4">
+                {product.name}
+              </h1>
 
-                 {/* 🛒 ADD TO CART BUTTON */}
+              {/* Rating Summary */}
+              <div className="flex items-center gap-2 mb-6">
+                 <div className="flex text-yellow-400 text-sm">
+                   {[...Array(5)].map((_, i) => (
+                     <FaStar key={i} className={i < product.rating ? 'text-yellow-400' : 'text-gray-200'} />
+                   ))}
+                 </div>
+                 <span className="text-sm font-bold text-gray-500">
+                   {product.rating.toFixed(1)} ({product.numReviews} Reviews)
+                 </span>
+              </div>
+
+              <div className="text-3xl font-black text-gray-900 mb-6">
+                {product.price.toLocaleString(undefined, { minimumFractionDigits: 2 })} ETB
+              </div>
+
+              <p className="text-gray-600 leading-relaxed mb-8 flex-grow">
+                {product.description}
+              </p>
+
+              {/* Add to Cart Section */}
+              <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 mt-auto">
+                 <div className="flex justify-between items-center mb-4">
+                    <span className="font-bold text-gray-700">Status:</span>
+                    {product.countInStock > 0 ? (
+                      <span className="text-green-600 font-bold flex items-center gap-1"><FaCheckCircle/> In Stock</span>
+                    ) : (
+                      <span className="text-red-500 font-bold">Out of Stock</span>
+                    )}
+                 </div>
+
+                 {product.countInStock > 0 && (
+                   <div className="flex items-center gap-4 mb-6">
+                      <span className="font-bold text-gray-700">Qty:</span>
+                      <select 
+                        value={qty} 
+                        onChange={(e) => setQty(Number(e.target.value))}
+                        className="bg-white border border-gray-200 rounded-xl px-4 py-2 font-bold focus:outline-none focus:border-green-500"
+                      >
+                        {[...Array(product.countInStock).keys()].map((x) => (
+                          <option key={x + 1} value={x + 1}>{x + 1}</option>
+                        ))}
+                      </select>
+                   </div>
+                 )}
+
                  <button 
                    onClick={addToCartHandler}
                    disabled={product.countInStock === 0}
-                   className="w-full bg-white border-2 border-green-100 hover:border-green-500 text-green-600 hover:bg-green-50 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200"
+                   className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-black text-lg transition-all shadow-lg shadow-green-200 disabled:bg-gray-300 disabled:shadow-none flex items-center justify-center gap-2"
                  >
-                    <FaShoppingCart /> Add to Cart
+                   <FaShoppingCart /> {product.countInStock === 0 ? 'Out of Stock' : 'Add to Cart'}
                  </button>
               </div>
-
-              <div className="mt-6 text-center">
-                 <p className="text-[10px] text-gray-400 flex items-center justify-center gap-1">
-                    <FaInfoCircle /> Secure transaction via Chapa
-                 </p>
-              </div>
-           </div>
+            </div>
+          </div>
         </div>
 
-      </div>
-
-      {/* ⭐ REVIEWS SECTION */}
-      <div className="container mx-auto px-4 mt-20">
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-           <div className="flex items-center gap-8 border-b border-gray-100 pb-4 mb-8">
-              <button 
-                className={`text-lg font-black pb-4 border-b-4 transition-all ${activeTab === 'reviews' ? 'border-green-500 text-green-500' : 'border-transparent text-gray-400'}`}
-                onClick={() => setActiveTab('reviews')}
-              >
-                Customer Reviews ({product.numReviews})
-              </button>
-              <button 
-                className={`text-lg font-black pb-4 border-b-4 transition-all ${activeTab === 'desc' ? 'border-green-500 text-green-500' : 'border-transparent text-gray-400'}`}
-                onClick={() => setActiveTab('desc')}
-              >
-                Specifications
-              </button>
-           </div>
-
-           {activeTab === 'reviews' && (
-             <div className="grid md:grid-cols-2 gap-12">
-                {/* LIST OF REVIEWS */}
-                <div className="space-y-6">
-                   {product.reviews.length === 0 && <div className="bg-blue-50 text-blue-600 p-4 rounded-xl text-sm font-bold">No reviews yet. Be the first to rate!</div>}
-                   {product.reviews.map((review) => (
-                     <div key={review._id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                        <div className="flex items-center justify-between mb-2">
-                           <strong className="text-gray-800">{review.name}</strong>
-                           <Rating value={review.rating} />
-                        </div>
-                        <p className="text-gray-500 text-sm mb-2">{review.createdAt.substring(0, 10)}</p>
-                        <p className="text-gray-600 italic">"{review.comment}"</p>
-                     </div>
-                   ))}
+        {/* BOTTOM SECTION: Reviews */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* Review List */}
+          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Customer Reviews</h2>
+            
+            {product.reviews.length === 0 && <p className="text-gray-500 bg-gray-50 p-4 rounded-xl">No reviews yet. Be the first!</p>}
+            
+            <div className="space-y-6">
+              {product.reviews.map((review) => (
+                <div key={review._id} className="border-b border-gray-50 pb-6 last:border-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <FaUserCircle className="text-gray-300 text-3xl" />
+                    <div>
+                      <strong className="block text-sm text-gray-800">{review.name}</strong>
+                      <div className="flex text-yellow-400 text-[10px] mt-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <FaStar key={i} className={i < review.rating ? 'text-yellow-400' : 'text-gray-200'} />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="ml-auto text-xs text-gray-400">{review.createdAt.substring(0, 10)}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm pl-11">{review.comment}</p>
                 </div>
+              ))}
+            </div>
+          </div>
 
-                {/* WRITE A REVIEW FORM */}
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 h-fit">
-                   <h3 className="font-bold text-gray-800 mb-4">Write a Customer Review</h3>
-                   {userInfo ? (
-                     <form>
-                        <div className="mb-4">
-                           <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Rating</label>
-                           <select className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-green-500">
-                              <option value="">Select...</option>
-                              <option value="5">5 - Excellent</option>
-                              <option value="4">4 - Very Good</option>
-                              <option value="3">3 - Good</option>
-                              <option value="2">2 - Fair</option>
-                              <option value="1">1 - Poor</option>
-                           </select>
-                        </div>
-                        <div className="mb-4">
-                           <label className="block text-xs font-bold text-gray-500 mb-2 uppercase">Comment</label>
-                           <textarea className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-green-500 h-24"></textarea>
-                        </div>
-                        <button className="bg-gray-800 text-white px-6 py-2 rounded-xl font-bold text-sm w-full hover:bg-black transition-colors">
-                           Submit Review
-                        </button>
-                     </form>
-                   ) : (
-                     <div className="bg-yellow-50 text-yellow-700 p-4 rounded-xl text-sm font-bold">
-                        Please <Link to="/login" className="underline text-black">sign in</Link> to write a review.
-                     </div>
-                   )}
+          {/* Review Form */}
+          <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 h-fit">
+            <h2 className="text-2xl font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Write a Review</h2>
+            
+            {userInfo ? (
+              <form onSubmit={submitReviewHandler} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Rating</label>
+                  <select 
+                    value={rating} 
+                    onChange={(e) => setRating(e.target.value)}
+                    required
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-green-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="1">1 - Poor</option>
+                    <option value="2">2 - Fair</option>
+                    <option value="3">3 - Good</option>
+                    <option value="4">4 - Very Good</option>
+                    <option value="5">5 - Excellent</option>
+                  </select>
                 </div>
-             </div>
-           )}
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Comment</label>
+                  <textarea 
+                    row="3"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    required
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-green-500 resize-none h-32"
+                    placeholder="What did you think about the product?"
+                  ></textarea>
+                </div>
+                <button 
+                  disabled={loadingProductReview}
+                  type="submit" 
+                  className="w-full bg-gray-900 hover:bg-black text-white py-3.5 rounded-xl font-bold transition-all disabled:bg-gray-400"
+                >
+                  {loadingProductReview ? <Loader /> : 'Submit Review'}
+                </button>
+              </form>
+            ) : (
+              <div className="bg-blue-50 text-blue-700 p-6 rounded-2xl text-center">
+                <p className="mb-3 font-medium">Please sign in to write a review</p>
+                <Link to="/login" className="inline-block bg-white text-blue-600 font-bold px-6 py-2 rounded-lg shadow-sm">
+                  Sign In
+                </Link>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

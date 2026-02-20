@@ -3,7 +3,8 @@ const router = express.Router();
 const { 
     getProducts, 
     getProductById, 
-    createProduct 
+    createProduct,
+    createProductReview
 } = require('../controllers/productController');
 const { protect, seller } = require('../middleware/authMiddleware'); // Import our guards
 
