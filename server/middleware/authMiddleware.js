@@ -44,11 +44,12 @@ const admin = (req, res, next) => {
 
 // 🏪 3. Seller Only Middleware
 const seller = (req, res, next) => {
-    if (req.user && (req.user.role === 'seller' || req.user.role === 'admin')) {
+    if (req.user && (req.user.role === 'seller')) {
         next();
     } else {
         res.status(401).json({ message: 'Not authorized as a seller' });
     }
 };
+
 
 module.exports = { protect, admin, seller };
