@@ -1,4 +1,5 @@
 const Product = require('../models/productModel');
+const Order = require('../models/orderModel');
 
 // @desc    Fetch all products
 // @route   GET /api/products
@@ -63,8 +64,60 @@ const createProduct = async (req, res) => {
     }
 };
 
+const createProductReview = async (req, res) => {
+  const { rating, comment } = req.body;
+  const product = await Product.findById(req.params.id);
+
+  if (product) {
+    // 1. Check if the user already reviewed this product
+    const alreadyReviewed = product.reviews.find(
+      (r) => r.user.toString() === req.user._id.toString()
+    );
+
+    if (alreadyReviewed) {
+      res.status(400);
+      throw new Error('You have already reviewed this product');
+    }
+
+    // 2. 🛡️ VERIFY DELIVERY: Check if user bought it AND it was delivered
+    const hasBoughtAndDelivered = await Order.findOne({
+      user: req.user._id,
+      isDelivered: true, // Must be delivered!
+      'orderItems.product': product._id,
+    });
+
+    if (!hasBoughtAndDelivered) {
+      res.status(400);
+      throw new Error('You can only review products after they have been delivered to you.');
+    }
+
+        // 3. Create and push the review
+        const review = {
+        name: req.user.name,
+        rating: Number(rating),
+        comment,
+        user: req.user._id,
+        };
+
+        product.reviews.push(review);
+
+        // 4. Update product stats
+        product.numReviews = product.reviews.length;
+        product.rating =
+        product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+        product.reviews.length;
+
+        await product.save();
+        res.status(201).json({ message: 'Review added successfully' });
+    } else {
+        res.status(404);
+        throw new Error('Product not found');
+    }
+    };
+
 module.exports = {
     getProducts,
     getProductById,
     createProduct,
+    createProductReview,
 };
