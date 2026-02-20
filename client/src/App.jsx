@@ -30,6 +30,7 @@ const App = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomeScreen />} index />
+          <Route path="/search/:keyword" element={<HomeScreen />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
 
