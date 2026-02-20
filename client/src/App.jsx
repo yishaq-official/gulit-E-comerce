@@ -22,6 +22,9 @@ import PlaceOrderScreen from './pages/PlaceOrderScreen';
 import OrderScreen from './pages/OrderScreen';
 import CartScreen from './pages/CartScreen';
 
+//seller pages
+import SellerLandingScreen from './pages/seller/SellerLandingScreen'; // 👈 Import it
+
 
 const App = () => {
   return (
@@ -46,6 +49,7 @@ const App = () => {
           </Route>
 
           {/* 🏪 Protected Seller Routes */}
+          <Route path="/sell" element={<SellerLandingScreen />} />
           <Route path="" element={<SellerRoute />}>
             {/* Add product management here later */}
           </Route>
