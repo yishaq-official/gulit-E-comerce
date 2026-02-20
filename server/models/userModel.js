@@ -15,18 +15,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    
-    role: {
-        type: String,
-        enum: ['buyer', 'seller', 'admin'],
-        default: 'buyer'
-    },
-    // 🛍️ Seller Specific Info (Only used if role is 'seller')
-    sellerProfile: {
-        shopName: { type: String },
-        shopDescription: { type: String },
-        address: { type: String }
-    }
+    // If you have an isAdmin flag, leave it here.
+    isAdmin: { type: Boolean, required: true, default: false },
+
 }, { timestamps: true });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
