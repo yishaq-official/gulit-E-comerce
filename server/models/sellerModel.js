@@ -8,6 +8,9 @@ const sellerSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phoneNumber: { type: String, required: true },
+    
+    // 👇 NEW: The actual text string of their National ID
+    nationalIdNumber: { type: String, required: true, unique: true },
 
     // 2. Business / Shop Details
     shopName: { type: String, required: true, unique: true },
@@ -15,7 +18,6 @@ const sellerSchema = new mongoose.Schema(
     shopCategory: { 
       type: String, 
       required: true,
-      // You can add more categories here
       enum: ['Electronics', 'Clothing', 'Home & Kitchen', 'Books', 'Beauty', 'Other'],
       default: 'Other'
     },
@@ -26,12 +28,15 @@ const sellerSchema = new mongoose.Schema(
       country: { type: String, required: true, default: 'Ethiopia' },
     },
 
-    // 3. KYC Verifications (These will store the file paths/URLs of the uploaded PDFs/Images)
-    merchantLicense: { type: String, required: true }, 
-    idCard: { type: String, required: true },
+    // 3. KYC Verifications (These permanently store the file paths on your server)
+    kycDocuments: {
+      idCardImage: { type: String, required: true },           // Front/Back of National ID
+      merchantLicenseImage: { type: String, required: true },  // Renewed Trade License
+      taxReceiptImage: { type: String, required: true },       // TIN Certificate / Tax Clearance
+    },
 
     // 4. Financial / Local Wallet System
-    walletBalance: { type: Number, required: true, default: 0.00 }, // Holds money from delivered orders
+    walletBalance: { type: Number, required: true, default: 0.00 }, 
     bankDetails: {
       bankName: { type: String },
       accountNumber: { type: String },
@@ -39,8 +44,8 @@ const sellerSchema = new mongoose.Schema(
     },
 
     // 5. Admin Control Flags
-    isApproved: { type: Boolean, required: true, default: false }, // Must be true to login/add products
-    isActive: { type: Boolean, required: true, default: true }, // Admin can set to false to suspend a seller
+    isApproved: { type: Boolean, required: true, default: false }, 
+    isActive: { type: Boolean, required: true, default: true }, 
   },
   { timestamps: true }
 );
