@@ -65,55 +65,57 @@ const createProduct = async (req, res) => {
 };
 
 const createProductReview = async (req, res) => {
-  const { rating, comment } = req.body;
-  const product = await Product.findById(req.params.id);
+  try {
+    const { rating, comment } = req.body;
+    const product = await Product.findById(req.params.id);
 
-  if (product) {
-    // 1. Check if the user already reviewed this product
-    const alreadyReviewed = product.reviews.find(
-      (r) => r.user.toString() === req.user._id.toString()
-    );
+    if (product) {
+      // 1. Check if already reviewed
+      const alreadyReviewed = product.reviews.find(
+        (r) => r.user.toString() === req.user._id.toString()
+      );
 
-    if (alreadyReviewed) {
-      res.status(400);
-      throw new Error('You have already reviewed this product');
-    }
+      if (alreadyReviewed) {
+        // 👇 Changed to return .json()
+        return res.status(400).json({ message: 'You have already reviewed this product' });
+      }
 
-    // 2. 🛡️ VERIFY DELIVERY: Check if user bought it AND it was delivered
-    const hasBoughtAndDelivered = await Order.findOne({
-      user: req.user._id,
-      isDelivered: true, // Must be delivered!
-      'orderItems.product': product._id,
-    });
+      // 2. Check if bought and delivered
+      const hasBoughtAndDelivered = await Order.findOne({
+        user: req.user._id,
+        isDelivered: true,
+        'orderItems.product': product._id,
+      });
 
-    if (!hasBoughtAndDelivered) {
-      res.status(400);
-      throw new Error('You can only review products after they have been delivered to you.');
-    }
+      if (!hasBoughtAndDelivered) {
+        // 👇 Changed to return .json()
+        return res.status(400).json({ message: 'You can only review products after they have been delivered to you.' });
+      }
 
-        // 3. Create and push the review
-        const review = {
+      // 3. Create review
+      const review = {
         name: req.user.name,
         rating: Number(rating),
         comment,
         user: req.user._id,
-        };
+      };
 
-        product.reviews.push(review);
-
-        // 4. Update product stats
-        product.numReviews = product.reviews.length;
-        product.rating =
+      product.reviews.push(review);
+      product.numReviews = product.reviews.length;
+      product.rating =
         product.reviews.reduce((acc, item) => item.rating + acc, 0) /
         product.reviews.length;
 
-        await product.save();
-        res.status(201).json({ message: 'Review added successfully' });
+      await product.save();
+      res.status(201).json({ message: 'Review added successfully' });
     } else {
-        res.status(404);
-        throw new Error('Product not found');
+      res.status(404).json({ message: 'Product not found' });
     }
-    };
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
 
 module.exports = {
     getProducts,
