@@ -1,11 +1,13 @@
 import React from 'react';
 import { useGetProductsQuery } from '../store/slices/productsApiSlice';
 import ProductCard from '../components/ProductCard';
-import Loader from '../components/Loader'; // Create a simple spinner later
+import Loader from '../components/Loader'; 
+import { useParams, Link } from 'react-router-dom';
 
 const HomeScreen = () => {
-  // 📥 Fetching real data from your backend!
-  const { data: products, isLoading, error } = useGetProductsQuery();
+  const { keyword } = useParams();
+  // 📥 Fetching real data from backend!
+  const { data: products, isLoading, error } = useGetProductsQuery({ keyword });
 
   return (
     <div className="space-y-16 pb-20">
