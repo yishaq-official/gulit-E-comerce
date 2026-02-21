@@ -87,7 +87,17 @@ const authSeller = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
+const logoutSeller = (req, res) => {
+  // If you are using HTTP-only cookies for JWT later, this clears it:
+  res.cookie('jwt', '', {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.status(200).json({ message: 'Seller logged out successfully' });
+};
 module.exports = {
   registerSeller,
-  authSeller
+  authSeller,
+  logoutSeller
 };

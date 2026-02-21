@@ -18,5 +18,6 @@ router.post('/', uploadSellerDocs, registerSeller);
 // @desc    Auth seller & get token
 // @access  Public
 router.post('/login', authSeller);
+router.post('/logout', logoutSeller);
 
 module.exports = router;
