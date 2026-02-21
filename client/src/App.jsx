@@ -30,6 +30,7 @@ import SellerLandingScreen from './pages/seller/SellerLandingScreen';
 import SellerRegisterScreen from './pages/seller/SellerRegisterScreen';
 import SellerLoginScreen from './pages/seller/SellerLoginScreen';
 import SellerPendingScreen from './pages/seller/SellerPendingScreen';
+import SellerDashboardScreen from './pages/seller/SellerDashboardScreen';
 
 
 const App = () => {
@@ -79,7 +80,7 @@ const App = () => {
             ======================================= */}
         <Route element={<SellerDashboardLayout />}>
           <Route path="" element={<SellerRoute />}>
-            {/* <Route path="/seller/dashboard" element={<SellerDashboardScreen />} /> */}
+          <Route path="/seller/dashboard" element={<SellerDashboardScreen />} />
             {/* <Route path="/seller/products" element={<SellerProductListScreen />} /> */}
           </Route>
         </Route>
