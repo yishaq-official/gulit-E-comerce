@@ -11,6 +11,7 @@ import AdminRoute from './components/AdminRoutes';
 // Seller Components
 import SellerLayout from './components/seller/SellerLayout'; // 👈 NEW
 import SellerRoute from './components/SellerRoute';
+import SellerDashboardLayout from './components/seller/SellerDashboardLayout';
 
 // Buyer Pages
 import HomeScreen from './pages/HomeScreen';
@@ -29,6 +30,7 @@ import SellerLandingScreen from './pages/seller/SellerLandingScreen';
 import SellerRegisterScreen from './pages/seller/SellerRegisterScreen';
 import SellerLoginScreen from './pages/seller/SellerLoginScreen';
 import SellerPendingScreen from './pages/seller/SellerPendingScreen';
+
 
 const App = () => {
   return (
@@ -69,12 +71,16 @@ const App = () => {
           <Route path="/sell" element={<SellerLandingScreen />} />
           <Route path="/seller/register" element={<SellerRegisterScreen />} />
           <Route path="/seller/login" element={<SellerLoginScreen />} />
+          <Route path="/seller/pending" element={<SellerPendingScreen />} />
+        </Route>
 
-          {/* pending screen */}
-          <Route path="/seller/pending" element={<SellerPendingScreen />}/>
-          {/* 🔒 Protected Seller Routes (Dashboard, Products, etc.) */}
+        {/* =======================================
+            💼 APPROVED SELLER WORKSPACE ROUTES 
+            ======================================= */}
+        <Route element={<SellerDashboardLayout />}>
           <Route path="" element={<SellerRoute />}>
-            {/* Add product management here later */}
+            {/* <Route path="/seller/dashboard" element={<SellerDashboardScreen />} /> */}
+            {/* <Route path="/seller/products" element={<SellerProductListScreen />} /> */}
           </Route>
         </Route>
 
