@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Import controllers
-const { registerSeller, authSeller } = require('../controllers/sellerController');
+const { registerSeller, authSeller, logoutSeller } = require('../controllers/sellerController');
 
 // Import the Multer middleware we created
 const { uploadSellerDocs } = require('../middleware/uploadMiddleware');
