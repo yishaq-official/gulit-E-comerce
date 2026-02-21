@@ -60,28 +60,23 @@ const registerSeller = async (req, res) => {
 const authSeller = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const seller = await Seller.findOne({ email });
 
     if (seller && (await seller.matchPassword(password))) {
       
-      // 🛡️ BLOCK 1: Check if the Admin has approved them yet
-      if (!seller.isApproved) {
-        return res.status(401).json({ message: 'Your account is still pending admin approval. Please check back later.' });
-      }
-      
-      // 🛡️ BLOCK 2: Check if the Admin suspended them
+      // 🛡️ We keep the "Suspended" block, because suspended users shouldn't log in
       if (!seller.isActive) {
         return res.status(401).json({ message: 'Your account has been suspended. Please contact support.' });
       }
 
-      // If approved and active, log them in!
+      // 👇 Notice we removed the `isApproved` block! We let them log in now.
       res.json({
         _id: seller._id,
         name: seller.name,
         email: seller.email,
         shopName: seller.shopName,
-        isSeller: true, // Let the frontend know this is a seller context
+        isSeller: true, 
+        isApproved: seller.isApproved, // 👈 CRUCIAL: Tell frontend their status
         token: generateToken(seller._id),
       });
     } else {
@@ -92,7 +87,6 @@ const authSeller = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
-
 module.exports = {
   registerSeller,
   authSeller

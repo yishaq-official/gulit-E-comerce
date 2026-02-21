@@ -28,6 +28,7 @@ import CartScreen from './pages/CartScreen';
 import SellerLandingScreen from './pages/seller/SellerLandingScreen'; 
 import SellerRegisterScreen from './pages/seller/SellerRegisterScreen';
 import SellerLoginScreen from './pages/seller/SellerLoginScreen';
+import SellerPendingScreen from './pages/seller/SellerPendingScreen';
 
 const App = () => {
   return (
@@ -68,6 +69,9 @@ const App = () => {
           <Route path="/sell" element={<SellerLandingScreen />} />
           <Route path="/seller/register" element={<SellerRegisterScreen />} />
           <Route path="/seller/login" element={<SellerLoginScreen />} />
+
+          {/* pending screen */}
+          <Route path="/seller/pending" element={<SellerPendingScreen />}/>
           {/* 🔒 Protected Seller Routes (Dashboard, Products, etc.) */}
           <Route path="" element={<SellerRoute />}>
             {/* Add product management here later */}

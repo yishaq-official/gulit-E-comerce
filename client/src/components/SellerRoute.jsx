@@ -3,14 +3,20 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 const SellerRoute = () => {
-  const { userInfo } = useSelector((state) => state.auth);
+  const { sellerInfo } = useSelector((state) => state.sellerAuth);
 
-  // 👇 Check if they are logged in AND their role is 'seller'
-  return userInfo && userInfo.role === 'seller' ? (
-    <Outlet /> 
-  ) : (
-    <Navigate to="/login" replace />
-  );
+  // 1. Not logged in at all? Go to login.
+  if (!sellerInfo) {
+    return <Navigate to="/seller/login" replace />;
+  }
+
+  // 2. Logged in, but NOT approved? Go to the pending waiting room.
+  if (!sellerInfo.isApproved) {
+    return <Navigate to="/seller/pending" replace />;
+  }
+
+  // 3. Logged in AND approved? Let them into the dashboard!
+  return <Outlet />;
 };
 
 export default SellerRoute;
