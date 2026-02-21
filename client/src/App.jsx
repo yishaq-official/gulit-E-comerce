@@ -26,6 +26,7 @@ import CartScreen from './pages/CartScreen';
 
 // Seller Pages
 import SellerLandingScreen from './pages/seller/SellerLandingScreen'; 
+import SellerRegisterScreen from './pages/seller/SellerRegisterScreen';
 
 const App = () => {
   return (
@@ -64,7 +65,7 @@ const App = () => {
             ======================================= */}
         <Route element={<SellerLayout />}>
           <Route path="/sell" element={<SellerLandingScreen />} />
-          
+          <Route path="/seller/register" element={<SellerRegisterScreen />} />
           {/* 🔒 Protected Seller Routes (Dashboard, Products, etc.) */}
           <Route path="" element={<SellerRoute />}>
             {/* Add product management here later */}
