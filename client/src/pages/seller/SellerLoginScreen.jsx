@@ -20,7 +20,11 @@ const SellerLoginScreen = () => {
 
   useEffect(() => {
     if (sellerInfo) {
-      navigate('/seller/dashboard');
+      if (sellerInfo.isApproved) {
+        navigate('/seller/dashboard');
+      } else {
+        navigate('/seller/pending'); // 👈 Send to waiting room if not approved
+      }
     }
   }, [navigate, sellerInfo]);
 
@@ -29,13 +33,19 @@ const SellerLoginScreen = () => {
     try {
       const res = await sellerLogin({ email, password }).unwrap();
       dispatch(setSellerCredentials({ ...res }));
-      navigate('/seller/dashboard');
-      toast.success('Welcome back to Seller Center!');
+      
+      // 👇 Check the backend response before redirecting!
+      if (res.isApproved) {
+        navigate('/seller/dashboard');
+        toast.success('Welcome back to Seller Center!');
+      } else {
+        navigate('/seller/pending');
+      }
+      
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
   };
-
   return (
     <div className="min-h-[calc(100vh-160px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#0f172a] relative overflow-hidden">
       
