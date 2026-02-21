@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useSellerLogoutApiMutation } from '../../store/slices/sellersApiSlice';
 import { logoutSeller } from '../../store/slices/sellerAuthSlice';
-import { FaClock, FaCheckCircle, FaShieldAlt, FaSignOutAlt } from 'react-icons/fa';
+import { toast } from 'react-toastify'; // 👈 Added toast for notifications
+import { FaClock, FaCheckCircle, FaShieldAlt, FaSignOutAlt, FaSyncAlt } from 'react-icons/fa'; // 👈 Added FaSyncAlt icon
 
 const SellerPendingScreen = () => {
   const { sellerInfo } = useSelector((state) => state.sellerAuth);
@@ -18,7 +19,14 @@ const SellerPendingScreen = () => {
       navigate('/seller/login');
     } catch (err) {
       console.error(err);
+      toast.error('Failed to log out. Please try again.');
     }
+  };
+
+  // 🛠️ New handler for the Check Status button
+  const checkStatusHandler = async () => {
+    toast.info("To fetch your latest status, please sign in again.");
+    await logoutHandler(); // Logs them out to clear the stale local storage
   };
 
   return (
@@ -58,10 +66,10 @@ const SellerPendingScreen = () => {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button 
-            onClick={() => window.location.reload()}
+            onClick={checkStatusHandler} // 👈 Updated onClick handler
             className="bg-blue-500 hover:bg-blue-400 text-white font-bold text-lg px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2"
           >
-            Check Status Again
+            <FaSyncAlt /> Check Status Again
           </button>
           <button 
             onClick={logoutHandler}
