@@ -1,5 +1,5 @@
 const Seller = require('../models/sellerModel');
-const generateToken = require('./authController'); 
+const { generateToken } = require('./authController');
 
 // @desc    Register a new seller (with KYC documents)
 // @route   POST /api/sellers

@@ -129,6 +129,7 @@ const updateUserProfile = async (req, res) => {
 
 
 module.exports = {
+    generateToken,
     registerUser,
     loginUser,
     logoutUser,
