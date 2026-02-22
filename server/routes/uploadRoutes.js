@@ -1,6 +1,7 @@
 const path = require('path');
 const express = require('express');
 const multer = require('multer');
+const crypto = require('crypto');
 const router = express.Router();
 
 // 1. Storage Configuration
@@ -9,7 +10,7 @@ const storage = multer.diskStorage({
         cb(null, path.join(path.resolve(), 'uploads/')); 
     },
     filename(req, file, cb) {
-        cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
+        cb(null, `${file.fieldname}-${Date.now()}-${crypto.randomUUID()}${path.extname(file.originalname)}`);
     }
 });
 

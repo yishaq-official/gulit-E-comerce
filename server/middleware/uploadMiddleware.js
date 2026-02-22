@@ -1,5 +1,6 @@
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 
 // 1. Configure Storage Destination and Filename
 const storage = multer.diskStorage({
@@ -11,7 +12,7 @@ const storage = multer.diskStorage({
     // Format: fieldname-timestamp.extension (e.g., idCardImage-1678901234.pdf)
     cb(
       null,
-      `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`
+      `${file.fieldname}-${Date.now()}-${crypto.randomUUID()}${path.extname(file.originalname)}`
     );
   },
 });
