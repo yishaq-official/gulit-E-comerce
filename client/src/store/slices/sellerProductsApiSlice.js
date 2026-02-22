@@ -44,6 +44,13 @@ export const sellerProductsApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['SellerProduct'],
     }),
+    uploadProductImages: builder.mutation({
+      query: (data) => ({
+        url: `/api/upload/products`,
+        method: 'POST',
+        body: data, // This will be FormData object containing files
+      }),
+    }),
 
   }),
 });
@@ -53,4 +60,5 @@ export const {
   useCreateSellerProductMutation,
   useUpdateSellerProductMutation,
   useDeleteSellerProductMutation,
+  useUploadProductImagesMutation,
 } = sellerProductsApiSlice;
