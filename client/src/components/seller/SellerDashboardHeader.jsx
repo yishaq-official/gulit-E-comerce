@@ -51,7 +51,7 @@ const SellerDashboardHeader = () => {
             <img 
               src={logo} 
               alt="Gulit Logo" 
-              className="w-10 h-10 object-contain group-hover:scale-105 transition-transform duration-300" 
+              className="w-50 h-50 object-contain group-hover:scale-105 transition-transform duration-300" 
             />
             <span className="text-2xl font-black text-white tracking-tight">
               Gulit <span className="text-green-500 font-medium">Workspace</span>
