@@ -48,4 +48,6 @@ const uploadSellerDocs = upload.fields([
   { name: 'taxReceiptImage', maxCount: 1 },
 ]);
 
-module.exports = { uploadSellerDocs };
+const uploadProductImages = upload.array('images', 6);
+
+module.exports = { uploadSellerDocs, uploadProductImages };
