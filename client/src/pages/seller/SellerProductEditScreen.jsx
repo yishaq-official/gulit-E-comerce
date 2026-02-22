@@ -8,6 +8,8 @@ import {
   useGetSellerProductsQuery,
   useUploadProductImagesMutation 
 } from '../../store/slices/sellerProductsApiSlice';
+// 👇 FIX: Import BASE_URL
+import { BASE_URL } from '../../store/slices/apiSlice';
 
 const SellerProductEditScreen = () => {
   const { id: productId } = useParams();
@@ -17,7 +19,7 @@ const SellerProductEditScreen = () => {
   // 1. Form State
   const [name, setName] = useState('');
   const [price, setPrice] = useState(0);
-  const [originalPrice, setOriginalPrice] = useState(0); // 👈 NEW: Added Original Price
+  const [originalPrice, setOriginalPrice] = useState(0); 
   const [brand, setBrand] = useState('');
   const [category, setCategory] = useState('Electronics');
   const [countInStock, setCountInStock] = useState(0);
@@ -45,14 +47,15 @@ const SellerProductEditScreen = () => {
       if (productToEdit) {
         setName(productToEdit.name);
         setPrice(productToEdit.price);
-        setOriginalPrice(productToEdit.originalPrice || 0); // 👈 NEW: Load it if it exists
+        setOriginalPrice(productToEdit.originalPrice || 0); 
         setBrand(productToEdit.brand);
         setCategory(productToEdit.category);
         setCountInStock(productToEdit.countInStock);
         setDescription(productToEdit.description);
         
+        // Combine the main 'image' and the 'images' array
         const combinedImages = [productToEdit.image, ...(productToEdit.images || [])];
-        const uniqueImages = [...new Set(combinedImages.filter(Boolean))]; // Filter out any undefined/null
+        const uniqueImages = [...new Set(combinedImages.filter(Boolean))]; 
         setUploadedImagePaths(uniqueImages);
       }
     }
@@ -125,13 +128,13 @@ const SellerProductEditScreen = () => {
       const productData = {
         name, 
         price, 
-        originalPrice, // 👈 NEW: Include it in the payload to the backend
+        originalPrice, 
         brand, 
         category, 
         countInStock, 
         description,
-        image: finalImagePaths[0], 
-        images: finalImagePaths.slice(1) 
+        image: finalImagePaths[0], // First image is main
+        images: finalImagePaths.slice(1) // Rest are gallery
       };
 
       if (isEditMode) {
@@ -174,7 +177,7 @@ const SellerProductEditScreen = () => {
               <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-green-500 transition-colors" placeholder="e.g., Wireless Gaming Mouse" />
             </div>
             
-            {/* 👇 NEW: Pricing Section Side-by-Side */}
+            {/* Pricing Section Side-by-Side */}
             <div className="bg-[#0f172a]/50 p-4 rounded-2xl border border-green-500/20">
               <label className="block text-sm font-bold text-green-400 mb-2 flex items-center gap-2"><FaTag /> Selling Price (ETB)</label>
               <input type="number" required min="0" value={price} onChange={(e) => setPrice(Number(e.target.value))} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500 transition-colors" />
@@ -214,9 +217,11 @@ const SellerProductEditScreen = () => {
           </label>
           
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-4">
+            {/* 1. Show already uploaded images (Edit Mode) - NOW WITH BASE_URL */}
             {uploadedImagePaths.map((path, index) => (
                  <div key={`uploaded-${index}`} className="relative group aspect-square bg-[#0f172a] rounded-xl border border-gray-700 overflow-hidden">
-                 <img src={path} alt="Product" className="w-full h-full object-cover" />
+                 {/* 👇 FIX: Prepend BASE_URL to existing database paths */}
+                 <img src={`${BASE_URL}${path}`} alt="Product" className="w-full h-full object-cover" />
                  {index === 0 && <span className="absolute bottom-0 left-0 right-0 bg-green-500/80 text-white text-xs font-bold text-center py-1">Main</span>}
                  <button type="button" onClick={() => removeUploadedImage(index)} className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                    <FaTimesCircle />
@@ -224,6 +229,7 @@ const SellerProductEditScreen = () => {
                </div>
             ))}
 
+            {/* 2. Show locally selected previews (No BASE_URL needed here as they are local blobs) */}
             {previewUrls.map((url, index) => (
               <div key={`preview-${index}`} className="relative group aspect-square bg-[#0f172a] rounded-xl border border-green-500/50 overflow-hidden">
                 <img src={url} alt="Preview" className="w-full h-full object-cover opacity-80" />
