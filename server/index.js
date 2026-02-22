@@ -8,6 +8,7 @@ const path = require('path'); // Import path module at the top
 const uploadRoutes = require('./routes/uploadRoutes'); 
 const orderRoutes = require('./routes/orderRoutes');
 const sellerRoutes = require('./routes/sellerRoutes');
+const sellerProductRoutes = require('./routes/sellerProductRoutes');
 
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/api/orders', orderRoutes); // Use
 
 //sellers routes
 app.use('/api/sellers', sellerRoutes);
+app.use('/api/sellers/products', sellerProductRoutes);
 
 
 
