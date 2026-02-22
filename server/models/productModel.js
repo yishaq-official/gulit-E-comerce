@@ -32,9 +32,9 @@ const productSchema = mongoose.Schema(
         required: true 
     }, // Main Image
     // 👇 NEW: Array of additional images for the slideshow
-    images: [
+    images: 
       { type: [String] } 
-    ], 
+    , 
     brand: { 
         type: String, 
         required: true 
