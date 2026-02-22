@@ -18,7 +18,7 @@ const getSellerProducts = async (req, res) => {
 const createSellerProduct = async (req, res) => {
   try {
     // 👇 Added 'images' (array) to the destructuring
-    const { name, price, description, image, images, brand, category, countInStock } = req.body;
+    const { name, price, originalPrice, description, image, images, brand, category, countInStock } = req.body;
 
     const product = new Product({
       name,
@@ -48,7 +48,7 @@ const createSellerProduct = async (req, res) => {
 const updateSellerProduct = async (req, res) => {
   try {
     // 👇 Added 'images' to the destructuring
-    const { name, price, description, image, images, brand, category, countInStock } = req.body;
+    const { name, price, originalPrice, description, image, images, brand, category, countInStock } = req.body;
 
     const product = await Product.findById(req.params.id);
 

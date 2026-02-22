@@ -54,18 +54,25 @@ const admin = (req, res, next) => {
 
 
 
+// @desc    Middleware to protect Seller routes
 const protectSeller = async (req, res, next) => {
   let token;
 
+  // 1. Look for the Bearer token in the Authorization header (from apiSlice)
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
+    token = req.headers.authorization.split(' ')[1];
+  } 
+  // 2. Fallback to cookies (if you ever change your frontend auth method)
+  else if (req.cookies && req.cookies.jwt) {
+    token = req.cookies.jwt;
+  }
 
-      // Decode token to get the ID
+  if (token) {
+    try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Find the seller in the database (exclude the password)
-      req.seller = await Seller.findById(decoded.id).select('-password');
+      // Find the seller in the database
+      req.seller = await Seller.findById(decoded.id || decoded.userId).select('-password');
 
       if (!req.seller) {
         return res.status(401).json({ message: 'Not authorized, seller not found' });
@@ -84,12 +91,9 @@ const protectSeller = async (req, res, next) => {
       console.error(error);
       res.status(401).json({ message: 'Not authorized, token failed' });
     }
-  }
-
-  if (!token) {
+  } else {
     res.status(401).json({ message: 'Not authorized, no token provided' });
   }
 };
-
 
 module.exports = { protect, admin, protectSeller };
