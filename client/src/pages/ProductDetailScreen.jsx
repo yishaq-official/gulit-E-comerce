@@ -15,6 +15,7 @@ import {
   FaTimes,
   FaTag
 } from 'react-icons/fa'; 
+// 👇 IMPORTANT: Make sure this import path is correct for your project structure
 import { BASE_URL } from '../store/slices/apiSlice';
 
 const ProductDetailScreen = () => {
@@ -35,7 +36,7 @@ const ProductDetailScreen = () => {
   const { data: product, isLoading, error, refetch } = useGetProductDetailsQuery(productId);
   const [createReview, { isLoading: loadingProductReview }] = useCreateReviewMutation();
 
-  // Reset the active image if the product changes
+  // Reset the active image if the product data loads or changes
   useEffect(() => {
     if (product && product.image) {
       setActiveImage(product.image);
@@ -70,8 +71,9 @@ const ProductDetailScreen = () => {
   if (isLoading) return <Loader />;
   if (error) return <div className="text-red-500 font-bold p-10">{error?.data?.message || error.error}</div>;
 
-  // 🖼️ Combine images for the gallery
-  const allImages = [product.image, ...(product.images || [])];
+  // 🖼️ Combine main image and gallery images into one array, filtering out nulls
+  // This handles your two separate DB attributes correctly.
+  const allImages = [product.image, ...(product.images || [])].filter(Boolean);
   
   // 💰 Calculate Discounts
   const hasDiscount = product.originalPrice && product.originalPrice > product.price;
@@ -79,6 +81,9 @@ const ProductDetailScreen = () => {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
     : 0;
   const savedAmount = hasDiscount ? product.originalPrice - product.price : 0;
+
+  // Ensure we have an active image to display, fallback to main image if state is empty
+  const currentDisplayImage = activeImage || product.image;
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4 relative">
@@ -96,31 +101,33 @@ const ProductDetailScreen = () => {
               
               {/* Main Large Image */}
               <div className="w-full aspect-square bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-inner flex items-center justify-center">
+                 {/* 👇 FIX: Ensure BASE_URL is prepended */}
                  <img 
-                   src={`${BASE_URL}${activeImage}`} 
+                   src={`${BASE_URL}${currentDisplayImage}`} 
                    alt={product.name} 
                    className="w-full h-full object-contain mix-blend-multiply p-4 transition-all duration-300"
                  />
               </div>
               
-              {/* Thumbnail Strip (Vertical on Desktop, Horizontal on Mobile) */}
+              {/* Thumbnail Strip */}
               {allImages.length > 1 && (
                 <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto md:max-h-[500px] w-full md:w-24 pb-2 md:pb-0 scrollbar-hide">
-                  {allImages.map((img, index) => (
+                  {allImages.map((imgPath, index) => (
                     <button 
                       key={index} 
-                      onMouseEnter={() => setActiveImage(img)} // Swap image on hover for a premium feel
-                      onClick={() => setActiveImage(img)}
-                      className={`w-16 h-16 md:w-20 md:h-20 rounded-xl border-2 overflow-hidden flex-shrink-0 transition-all bg-gray-50 ${activeImage === img ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-200 hover:border-red-300'}`}
+                      // 👇 FIX: Removed onMouseEnter. Only changes on Click now.
+                      onClick={() => setActiveImage(imgPath)}
+                      className={`w-16 h-16 md:w-20 md:h-20 rounded-xl border-2 overflow-hidden flex-shrink-0 transition-all bg-gray-50 ${currentDisplayImage === imgPath ? 'border-red-500 ring-2 ring-red-500/20' : 'border-gray-200 hover:border-red-300'}`}
                     >
-                       <img src={`${BASE_URL}${img}`} alt={`thumbnail ${index + 1}`} className="w-full h-full object-cover mix-blend-multiply" />
+                       {/* 👇 FIX: Ensure BASE_URL is prepended to thumbnails too */}
+                       <img src={`${BASE_URL}${imgPath}`} alt={`thumbnail ${index + 1}`} className="w-full h-full object-cover mix-blend-multiply" />
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* RIGHT: Details & Actions */}
+            {/* RIGHT: Details & Actions (No changes needed here) */}
             <div className="p-8 md:p-12 flex flex-col">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
                 <FaTag className="text-gray-300" /> {product.brand}
@@ -212,16 +219,11 @@ const ProductDetailScreen = () => {
           </div>
         </div>
 
-        {/* BOTTOM SECTION: Reviews (Kept your existing code perfectly intact) */}
-        {/* ... (The rest of your reviews and modal code remains exactly the same below here) ... */}
-        
+        {/* BOTTOM SECTION: Reviews (No changes needed here) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
           <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100">
             <h2 className="text-2xl font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Customer Reviews</h2>
-            
             {product.reviews.length === 0 && <p className="text-gray-500 bg-gray-50 p-4 rounded-xl">No reviews yet. Be the first!</p>}
-            
             <div className="space-y-6">
               {product.reviews.map((review) => (
                 <div key={review._id} className="border-b border-gray-50 pb-6 last:border-0">
@@ -245,7 +247,6 @@ const ProductDetailScreen = () => {
 
           <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 h-fit">
             <h2 className="text-2xl font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Write a Review</h2>
-            
             {userInfo ? (
               <form onSubmit={submitReviewHandler} className="space-y-4">
                 <div>
