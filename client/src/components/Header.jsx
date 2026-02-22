@@ -5,6 +5,7 @@ import logo from '../assets/gulit.png';
 import { FaShoppingCart, FaUser } from 'react-icons/fa';
 import AccountMenu from './AccountMenu'; // 👈 Import the new component
 import SearchBox from './SearchBox';
+import SubHeader from './SubHeader';
 
 const Header = () => {
   const { cartItems } = useSelector((state) => state.cart);
@@ -57,6 +58,7 @@ const Header = () => {
            )}
         </div>
       </div>
+      <SubHeader />
     </header>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { FaTrash, FaArrowLeft, FaShoppingBag } from 'react-icons/fa';
+import { FaTrash, FaArrowLeft, FaShoppingBag, FaTag } from 'react-icons/fa';
 import { addToCart, removeFromCart } from '../store/slices/cartSlice';
 import { BASE_URL } from '../store/slices/apiSlice';
 
@@ -9,35 +9,39 @@ const CartScreen = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Get cart items from Redux state
   const cart = useSelector((state) => state.cart);
   const { cartItems } = cart;
 
-  // Change quantity of an item already in the cart
   const addToCartHandler = async (product, qty) => {
     dispatch(addToCart({ ...product, qty }));
   };
 
-  // Remove an item entirely
   const removeFromCartHandler = (id) => {
     dispatch(removeFromCart(id));
   };
 
-  // Proceed to Checkout
   const checkoutHandler = () => {
     navigate('/login?redirect=/shipping');
   };
+
+  // 💰 NEW: Calculate total savings across all discounted items in the cart
+  const totalSavings = cartItems.reduce((acc, item) => {
+    if (item.originalPrice && item.originalPrice > item.price) {
+      return acc + ((item.originalPrice - item.price) * item.qty);
+    }
+    return acc;
+  }, 0);
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="container mx-auto max-w-6xl">
         <h1 className="text-3xl font-black text-gray-900 mb-8 flex items-center gap-3">
-          <FaShoppingBag className="text-green-500" /> Shopping Cart
+          <FaShoppingBag className="text-gray-900" /> Shopping Cart
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
-          {/* 👈 LEFT: CART ITEMS (Col Span 8) */}
+          {/* 👈 LEFT: CART ITEMS */}
           <div className="lg:col-span-8">
             {cartItems.length === 0 ? (
               <div className="bg-white p-12 rounded-[2rem] shadow-sm border border-gray-100 text-center flex flex-col items-center">
@@ -48,7 +52,7 @@ const CartScreen = () => {
                 <p className="text-gray-500 mb-8">Looks like you haven't added anything to your cart yet.</p>
                 <Link 
                   to="/" 
-                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-green-200"
+                  className="bg-red-500 hover:bg-red-600 text-white px-8 py-3.5 rounded-xl font-bold transition-all shadow-lg shadow-red-200"
                 >
                   Start Shopping
                 </Link>
@@ -64,13 +68,22 @@ const CartScreen = () => {
                         <img 
                           src={`${BASE_URL}${item.image}`} 
                           alt={item.name} 
-                          className="w-24 h-24 object-cover rounded-2xl bg-gray-50 border border-gray-100"
+                          className="w-24 h-24 object-contain mix-blend-multiply p-2 rounded-2xl bg-gray-50 border border-gray-100"
                         />
                         <div>
-                          <Link to={`/product/${item._id}`} className="text-lg font-bold text-gray-800 hover:text-green-500 transition-colors block mb-1">
+                          <Link to={`/product/${item._id}`} className="text-lg font-bold text-gray-800 hover:text-red-500 transition-colors block mb-1">
                             {item.name}
                           </Link>
-                          <div className="text-sm text-gray-400 font-medium">Unit Price: <span className="text-gray-600 font-bold">{item.price} ETB</span></div>
+                          {/* 💰 NEW: Show original price if discounted */}
+                          <div className="text-sm font-medium">
+                            <span className="text-gray-400">Unit Price: </span>
+                            {item.originalPrice && item.originalPrice > item.price && (
+                              <span className="text-gray-400 line-through mr-2">
+                                {item.originalPrice.toLocaleString()} ETB
+                              </span>
+                            )}
+                            <span className="text-red-600 font-bold">{item.price.toLocaleString()} ETB</span>
+                          </div>
                         </div>
                       </div>
 
@@ -79,7 +92,7 @@ const CartScreen = () => {
                         <select 
                           value={item.qty} 
                           onChange={(e) => addToCartHandler(item, Number(e.target.value))}
-                          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 font-bold text-gray-700 focus:outline-none focus:border-green-500"
+                          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 font-bold text-gray-700 focus:outline-none focus:border-red-500"
                         >
                           {[...Array(item.countInStock).keys()].map((x) => (
                             <option key={x + 1} value={x + 1}>
@@ -89,7 +102,7 @@ const CartScreen = () => {
                         </select>
                         
                         <div className="text-lg font-black text-gray-900 w-24 text-right">
-                          {(item.price * item.qty).toFixed(2)} ETB
+                          {(item.price * item.qty).toLocaleString(undefined, { minimumFractionDigits: 2 })} ETB
                         </div>
 
                         <button 
@@ -105,31 +118,49 @@ const CartScreen = () => {
               </div>
             )}
             
-            <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-green-500 font-bold transition-colors mt-6 ml-2">
+            <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold transition-colors mt-6 ml-2">
               <FaArrowLeft size={12} /> Continue Shopping
             </Link>
           </div>
 
-          {/* 👉 RIGHT: CART SUMMARY (Col Span 4) */}
+          {/* 👉 RIGHT: CART SUMMARY */}
           <div className="lg:col-span-4">
             <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-xl shadow-gray-100 border border-gray-100 sticky top-24">
               <h2 className="text-2xl font-black text-gray-900 mb-6 border-b border-gray-100 pb-4">Order Summary</h2>
               
               <div className="space-y-4 text-sm mb-6">
-                 <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-medium">Subtotal ({cartItems.reduce((acc, item) => acc + item.qty, 0)} items)</span>
-                    <span className="text-2xl font-black text-gray-900">
-                      {cartItems.reduce((acc, item) => acc + item.qty * item.price, 0).toFixed(2)} ETB
+                 {/* Item Count & Subtotal */}
+                 <div className="flex justify-between items-center text-gray-600 font-medium">
+                    <span>Items ({cartItems.reduce((acc, item) => acc + item.qty, 0)}):</span>
+                    <span>
+                      {cartItems.reduce((acc, item) => acc + ((item.originalPrice || item.price) * item.qty), 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} ETB
                     </span>
                  </div>
-                 <p className="text-xs text-gray-400">Taxes and shipping calculated at checkout.</p>
+
+                 {/* 💰 NEW: Total Savings Banner */}
+                 {totalSavings > 0 && (
+                   <div className="flex justify-between items-center text-green-600 font-bold bg-green-50 p-3 rounded-xl">
+                      <span className="flex items-center gap-2"><FaTag /> Total Savings:</span>
+                      <span>- {totalSavings.toLocaleString(undefined, { minimumFractionDigits: 2 })} ETB</span>
+                   </div>
+                 )}
+
+                 {/* Final Total */}
+                 <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <span className="text-lg font-bold text-gray-900">Total:</span>
+                    <span className="text-3xl font-black text-red-600">
+                      {cartItems.reduce((acc, item) => acc + item.qty * item.price, 0).toLocaleString(undefined, { minimumFractionDigits: 2 })} ETB
+                    </span>
+                 </div>
+                 
+                 <p className="text-xs text-gray-400 text-center mt-2">Taxes and shipping calculated at checkout.</p>
               </div>
 
               <button 
                 type="button" 
                 disabled={cartItems.length === 0}
                 onClick={checkoutHandler}
-                className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-black text-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-black text-lg transition-all active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg shadow-red-200"
               >
                 Proceed to Checkout
               </button>
