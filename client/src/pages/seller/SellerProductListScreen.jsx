@@ -77,8 +77,8 @@ const SellerProductListScreen = () => {
         
       ) : (
 
-        {/* 📋 The Product Table */}
         <div className="bg-[#1e293b] rounded-3xl border border-gray-700 overflow-hidden shadow-xl">
+          {/* 📋 The Product Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
