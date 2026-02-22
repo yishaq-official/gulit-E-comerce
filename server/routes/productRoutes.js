@@ -3,20 +3,29 @@ const router = express.Router();
 const { 
     getProducts, 
     getProductById, 
-    createProduct,
     createProductReview
 } = require('../controllers/productController');
-const { protect, seller } = require('../middleware/authMiddleware'); // Import our guards
+const { protect } = require('../middleware/authMiddleware'); 
 
+// =======================================
+// 🛍️ PUBLIC BUYER ROUTES
+// =======================================
 
-// Public Routes
+// Fetch all products for the homepage/search
 router.get('/', getProducts);
+
+// Fetch a single product for the Product Details page
 router.get('/:id', getProductById);
 
-// Protected Route (Only Sellers can create!)
-router.post('/', protect, seller, createProduct);
 
-//create  review functionality for buyers after they recieve ordered item.
+// =======================================
+// 🔒 PROTECTED BUYER ROUTES
+// =======================================
+
+// Create a review functionality for buyers after they receive ordered item.
 router.route('/:id/reviews').post(protect, createProductReview);
+
+
+// Note: Seller product creation (POST /) was moved to server/routes/sellerProductRoutes.js!
 
 module.exports = router;

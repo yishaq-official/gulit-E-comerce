@@ -60,8 +60,8 @@ const SellerProductListScreen = () => {
         </div>
       ) : products && products.length === 0 ? (
         
-        {/* 📭 Empty State (No Products) */}
         <div className="bg-[#1e293b] border border-gray-700 rounded-[2rem] p-16 text-center shadow-xl flex flex-col items-center">
+          {/* 📭 Empty State (No Products) */}
           <div className="w-24 h-24 bg-[#0f172a] rounded-full flex items-center justify-center mb-6 border border-gray-800 shadow-inner">
             <FaBoxOpen className="text-5xl text-gray-500" />
           </div>
