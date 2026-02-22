@@ -23,6 +23,7 @@ const createSellerProduct = async (req, res) => {
     const product = new Product({
       name,
       price,
+      originalPrice: originalPrice || 0,
       user: req.seller._id, 
       seller: req.seller._id, 
       image, // Main thumbnail image
@@ -58,6 +59,7 @@ const updateSellerProduct = async (req, res) => {
 
       product.name = name || product.name;
       product.price = price || product.price;
+      product.originalPrice = originalPrice !== undefined ? originalPrice : product.originalPrice;
       product.description = description || product.description;
       product.image = image || product.image;
       product.images = images || product.images; // 👇 Update the secondary images array
