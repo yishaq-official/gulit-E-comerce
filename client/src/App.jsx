@@ -24,6 +24,7 @@ import PaymentScreen from './pages/PaymentScreen';
 import PlaceOrderScreen from './pages/PlaceOrderScreen';
 import OrderScreen from './pages/OrderScreen';
 import CartScreen from './pages/CartScreen';
+import CategoryScreen from './pages/CategoryScreen';
 
 // Seller Pages
 import SellerLandingScreen from './pages/seller/SellerLandingScreen'; 
@@ -58,6 +59,7 @@ const App = () => {
             <Route path="/placeorder" element={<PlaceOrderScreen />} />
             <Route path="/order/:id" element={<OrderScreen />} />
             <Route path="/cart" element={<CartScreen />} />
+            <Route path="/category/:categoryName" element={<CategoryScreen />} />
           </Route>
 
           {/* 🛡️ Protected Admin Routes */}
