@@ -5,7 +5,6 @@ const Product = require('../models/productModel');
 // @access  Private/Seller
 const getSellerProducts = async (req, res) => {
   try {
-    // Fetch only the products where the 'seller' field matches the logged-in seller's ID
     const products = await Product.find({ seller: req.seller._id });
     res.json(products);
   } catch (error) {
@@ -18,14 +17,16 @@ const getSellerProducts = async (req, res) => {
 // @access  Private/Seller
 const createSellerProduct = async (req, res) => {
   try {
-    const { name, price, description, image, brand, category, countInStock } = req.body;
+    // 👇 Added 'images' (array) to the destructuring
+    const { name, price, description, image, images, brand, category, countInStock } = req.body;
 
     const product = new Product({
       name,
       price,
-      user: req.seller._id, // Notice we assign the logged-in seller's ID
-      seller: req.seller._id, // Keeping both if your schema still has 'user', but 'seller' is the new standard
-      image,
+      user: req.seller._id, 
+      seller: req.seller._id, 
+      image, // Main thumbnail image
+      images: images || [], // 👇 Save the array of additional images
       brand,
       category,
       countInStock,
@@ -45,12 +46,12 @@ const createSellerProduct = async (req, res) => {
 // @access  Private/Seller
 const updateSellerProduct = async (req, res) => {
   try {
-    const { name, price, description, image, brand, category, countInStock } = req.body;
+    // 👇 Added 'images' to the destructuring
+    const { name, price, description, image, images, brand, category, countInStock } = req.body;
 
     const product = await Product.findById(req.params.id);
 
     if (product) {
-      // 🛡️ Security Check: Make sure the logged-in seller actually owns this product!
       if (product.seller.toString() !== req.seller._id.toString()) {
         return res.status(403).json({ message: 'You do not have permission to edit this product' });
       }
@@ -59,6 +60,7 @@ const updateSellerProduct = async (req, res) => {
       product.price = price || product.price;
       product.description = description || product.description;
       product.image = image || product.image;
+      product.images = images || product.images; // 👇 Update the secondary images array
       product.brand = brand || product.brand;
       product.category = category || product.category;
       product.countInStock = countInStock !== undefined ? countInStock : product.countInStock;
@@ -81,7 +83,6 @@ const deleteSellerProduct = async (req, res) => {
     const product = await Product.findById(req.params.id);
 
     if (product) {
-      // 🛡️ Security Check: Ensure ownership before deleting
       if (product.seller.toString() !== req.seller._id.toString()) {
         return res.status(403).json({ message: 'You do not have permission to delete this product' });
       }

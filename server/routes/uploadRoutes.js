@@ -6,21 +6,17 @@ const router = express.Router();
 // 1. Storage Configuration
 const storage = multer.diskStorage({
     destination(req, file, cb) {
-        // Use path.join to ensure it always points to the server's uploads folder
         cb(null, path.join(path.resolve(), 'uploads/')); 
     },
     filename(req, file, cb) {
-        // Name the file: image-123456789.jpg
         cb(null, `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`);
     }
 });
 
 // 2. Validate File Type (Images Only)
 function checkFileType(file, cb) {
-    const filetypes = /jpg|jpeg|png/;
-    // Check extension (.jpg)
+    const filetypes = /jpg|jpeg|png|webp/; // Added webp as it's great for e-commerce
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    // Check mimetype (image/jpeg)
     const mimetype = filetypes.test(file.mimetype);
 
     if (extname && mimetype) {
@@ -39,10 +35,17 @@ const upload = multer({
 });
 
 // 4. The Route
-// The frontend will send a file with the key name 'image'
-router.post('/', upload.single('image'), (req, res) => {
-    // Send back the path so the frontend can save it in the Product DB
-    res.send(`/${req.file.path}`);
+// 👇 Changed to upload.array() and 'images' (plural) with a max of 6 files
+router.post('/', upload.array('images', 6), (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).send({ message: 'No images uploaded' });
+    }
+
+    // Map through the uploaded files to construct the array of clean paths
+    const imagePaths = req.files.map((file) => `/uploads/${file.filename}`);
+    
+    // Send back the array of paths so the frontend can save them in the Product DB
+    res.status(200).send(imagePaths);
 });
 
 module.exports = router;
