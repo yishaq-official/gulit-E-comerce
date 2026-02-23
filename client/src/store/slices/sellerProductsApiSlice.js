@@ -1,6 +1,7 @@
 import { apiSlice } from './apiSlice';
 
 const SELLER_PRODUCTS_URL = '/api/sellers/products';
+const SELLER_ORDERS_URL = '/api/sellers/orders';
 
 export const sellerProductsApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -50,6 +51,13 @@ export const sellerProductsApiSlice = apiSlice.injectEndpoints({
         method: 'POST',
         body: data, // This will be FormData object containing files
       }),
+      getSellerOrders: builder.query({
+      query: () => ({
+        url: SELLER_ORDERS_URL,
+      }),
+      providesTags: ['SellerOrder'], // Cache tag for orders
+      keepUnusedDataFor: 5,
+    }),
     }),
 
   }),
@@ -61,4 +69,5 @@ export const {
   useUpdateSellerProductMutation,
   useDeleteSellerProductMutation,
   useUploadProductImagesMutation,
+  useGetSellerOrdersQuery,
 } = sellerProductsApiSlice;
