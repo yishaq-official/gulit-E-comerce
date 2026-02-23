@@ -61,6 +61,21 @@ export const sellerProductsApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 5,
     }),
 
+    getSellerOrderDetails: builder.query({
+      query: (orderId) => ({
+        url: `${SELLER_ORDERS_URL}/${orderId}`,
+      }),
+      providesTags: ['SellerOrder'],
+    }),
+
+    deliverSellerOrder: builder.mutation({
+      query: (orderId) => ({
+        url: `${SELLER_ORDERS_URL}/${orderId}/deliver`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['SellerOrder'],
+    }),
+
   }),
 });
 
@@ -71,4 +86,6 @@ export const {
   useDeleteSellerProductMutation,
   useUploadProductImagesMutation,
   useGetSellerOrdersQuery,
+  useGetSellerOrderDetailsQuery,
+  useDeliverSellerOrderMutation,
 } = sellerProductsApiSlice;
