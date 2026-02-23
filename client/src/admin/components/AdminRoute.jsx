@@ -2,9 +2,9 @@ import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-const AdminRoutes = () => {
+const AdminRoute = () => {
   const { adminInfo } = useSelector((state) => state.adminAuth);
   return adminInfo ? <Outlet /> : <Navigate to="/admin/login" replace />;
 };
 
-export default AdminRoutes;
+export default AdminRoute;

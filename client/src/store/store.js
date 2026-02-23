@@ -4,6 +4,7 @@ import cartSliceReducer from './slices/cartSlice';
 import authSliceReducer from './slices/authSlice';
 
 import sellerAuthReducer from './slices/sellerAuthSlice';
+import adminAuthReducer from '../admin/slices/adminAuthSlice';
 
 const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ const store = configureStore({
     cart: cartSliceReducer,
     auth: authSliceReducer,
     sellerAuth: sellerAuthReducer,
+    adminAuth: adminAuthReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiSlice.middleware),

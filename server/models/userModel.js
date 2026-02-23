@@ -17,6 +17,9 @@ const userSchema = new mongoose.Schema({
     },
     // If you have an isAdmin flag, leave it here.
     isAdmin: { type: Boolean, required: true, default: false },
+    googleId: { type: String, default: '' },
+    resetPasswordToken: { type: String, default: '' },
+    resetPasswordExpires: { type: Date },
 
 }, { timestamps: true });
 

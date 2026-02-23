@@ -6,7 +6,6 @@ import 'react-toastify/dist/ReactToastify.css';
 // Buyer Components
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
-import AdminRoute from './components/AdminRoutes';
 
 // Seller Components
 import SellerLayout from './components/seller/SellerLayout'; // 👈 NEW
@@ -41,6 +40,13 @@ import SellerSettingsScreen from './pages/seller/SellerSettingsScreen';
 import SellerHelpCenterScreen from './pages/seller/SellerHelpCenterScreen';
 import SellerRulesCenterScreen from './pages/seller/SellerRulesCenterScreen';
 
+// Admin Pages
+import AdminLoginScreen from './admin/pages/AdminLoginScreen';
+import AdminForgotPasswordScreen from './admin/pages/AdminForgotPasswordScreen';
+import AdminResetPasswordScreen from './admin/pages/AdminResetPasswordScreen';
+import AdminDashboardScreen from './admin/pages/AdminDashboardScreen';
+import AdminRouteGuard from './admin/components/AdminRoute';
+
 
 const App = () => {
   return (
@@ -68,10 +74,6 @@ const App = () => {
             <Route path="/category/:categoryName" element={<CategoryScreen />} />
           </Route>
 
-          {/* 🛡️ Protected Admin Routes */}
-          <Route path="" element={<AdminRoute />}>
-            {/* Add user management and analytics here later */}
-          </Route>
         </Route>
 
 
@@ -101,6 +103,16 @@ const App = () => {
           <Route path="/seller/wallet" element={<SellerWalletScreen />} />
           <Route path="/seller/settings" element={<SellerSettingsScreen />} />
           </Route>
+        </Route>
+
+        {/* =======================================
+            🛡️ ADMIN ROUTES
+            ======================================= */}
+        <Route path="/admin/login" element={<AdminLoginScreen />} />
+        <Route path="/admin/forgot-password" element={<AdminForgotPasswordScreen />} />
+        <Route path="/admin/reset-password/:token" element={<AdminResetPasswordScreen />} />
+        <Route element={<AdminRouteGuard />}>
+          <Route path="/admin/dashboard" element={<AdminDashboardScreen />} />
         </Route>
 
       </Routes>

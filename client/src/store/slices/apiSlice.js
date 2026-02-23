@@ -8,19 +8,26 @@ const baseQuery = fetchBaseQuery({
     // 1. Safely grab both tokens (added ? after auth to prevent crashes)
     const userToken = getState().auth?.userInfo?.token;
     const sellerToken = getState().sellerAuth?.sellerInfo?.token;
+    const adminToken = getState().adminAuth?.adminInfo?.token;
 
     // 2. 🧠 SMART TOKEN ROUTING
     // By default, use the buyer token
     let token = userToken; 
 
     // If the endpoint we are calling has 'Seller' or 'upload' in its name, switch to the seller token
-    const isSellerAction = endpoint?.toLowerCase().includes('seller') || endpoint?.includes('upload');
+    const endpointLower = endpoint?.toLowerCase() || '';
+    const isSellerAction = endpointLower.includes('seller') || endpointLower.includes('upload');
+    const isAdminAction = endpointLower.includes('admin');
     
-    if (isSellerAction && sellerToken) {
+    if (isAdminAction && adminToken) {
+      token = adminToken;
+    } else if (isSellerAction && sellerToken) {
       token = sellerToken;
     } else if (sellerToken && !userToken) {
       // Fallback: If they are ONLY logged in as a seller, use that
       token = sellerToken; 
+    } else if (adminToken && !userToken && !sellerToken) {
+      token = adminToken;
     }
 
     // 3. If a token exists, attach it to the headers
