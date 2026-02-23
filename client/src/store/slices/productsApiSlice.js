@@ -4,9 +4,9 @@ export const productsApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     // This hook will be used to fetch all products
     getProducts: builder.query({
-      query: ({ keyword }) => ({
+      query: ({ keyword, category }) => ({
         url: '/api/products',
-        params: { keyword },
+        params: { keyword, category },
       }),
       keepUnusedDataFor: 5, // Caches data for 5 seconds
       providesTags: ['Product'],
