@@ -59,8 +59,8 @@ const SellerDashboardHeader = () => {
           </Link>
 
           <div className="hidden md:flex items-center gap-6 font-medium">
-            <Link to="#" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
-            <Link to="#" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+            <Link to="/seller/help-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
+            <Link to="/seller/rules-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
           </div>
         </div>
 

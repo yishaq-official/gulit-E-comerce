@@ -38,6 +38,8 @@ import SellerOrderListScreen from './pages/seller/SellerOrderListScreen';
 import SellerOrderDetailsScreen from './pages/seller/SellerOrderDetailsScreen';
 import SellerWalletScreen from './pages/seller/SellerWalletScreen';
 import SellerSettingsScreen from './pages/seller/SellerSettingsScreen';
+import SellerHelpCenterScreen from './pages/seller/SellerHelpCenterScreen';
+import SellerRulesCenterScreen from './pages/seller/SellerRulesCenterScreen';
 
 
 const App = () => {
@@ -81,6 +83,8 @@ const App = () => {
           <Route path="/seller/register" element={<SellerRegisterScreen />} />
           <Route path="/seller/login" element={<SellerLoginScreen />} />
           <Route path="/seller/pending" element={<SellerPendingScreen />} />
+          <Route path="/seller/help-center" element={<SellerHelpCenterScreen />} />
+          <Route path="/seller/rules-center" element={<SellerRulesCenterScreen />} />
         </Route>
 
         {/* =======================================

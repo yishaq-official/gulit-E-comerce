@@ -45,8 +45,8 @@ const SellerHeader = () => {
           </Link>
 
           <div className="hidden md:flex items-center gap-6 font-medium">
-            <Link to="#" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
-            <Link to="#" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+            <Link to="/seller/help-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
+            <Link to="/seller/rules-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
           </div>
         </div>
 
@@ -113,8 +113,8 @@ const SellerHeader = () => {
           ============================== */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-[#1e293b] border-b border-gray-800 p-4 flex flex-col gap-4 shadow-xl transition-all duration-300">
-          <Link to="#" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Help Center</Link>
-          <Link to="#" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+          <Link to="/seller/help-center" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Help Center</Link>
+          <Link to="/seller/rules-center" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Rules Center</Link>
           <hr className="border-gray-700" />
           
           {sellerInfo ? (
