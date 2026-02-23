@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { useGetSellerWalletQuery } from '../../store/slices/sellersApiSlice';
 import { 
   FaDollarSign, FaShoppingBag, FaBoxOpen, FaWallet, 
   FaArrowRight, FaPlus, FaChartLine, FaEllipsisH
@@ -8,6 +9,7 @@ import {
 
 const SellerDashboardScreen = () => {
   const { sellerInfo } = useSelector((state) => state.sellerAuth);
+  const { data: walletData } = useGetSellerWalletQuery();
 
   // MOCK DATA: We will replace this with real API data later
   const mockOrders = [
@@ -16,6 +18,7 @@ const SellerDashboardScreen = () => {
     { _id: 'ORD-7827', date: '2026-02-19', customer: 'Dawit Mekonnen', total: 8900, status: 'Delivered' },
     { _id: 'ORD-7826', date: '2026-02-18', customer: 'Helen Hailu', total: 320, status: 'Delivered' },
   ];
+  const walletBalance = Number(walletData?.walletBalance || 0);
 
   return (
     <div className="w-full animate-fade-in-up">
@@ -81,7 +84,10 @@ const SellerDashboardScreen = () => {
             <button className="text-gray-400 hover:text-white transition-colors"><FaEllipsisH /></button>
           </div>
           <h3 className="text-gray-400 text-sm font-bold uppercase tracking-wider mb-1 relative z-10">Wallet Balance</h3>
-          <p className="text-3xl font-black text-white relative z-10">8,200 <span className="text-lg text-green-500 font-medium">ETB</span></p>
+          <p className="text-3xl font-black text-white relative z-10">
+            {walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+            <span className="text-lg text-green-500 font-medium">ETB</span>
+          </p>
         </div>
 
       </div>

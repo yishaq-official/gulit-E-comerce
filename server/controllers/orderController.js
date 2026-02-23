@@ -1,4 +1,6 @@
 const Order = require('../models/orderModel');
+const Seller = require('../models/sellerModel');
+const SellerWalletTransaction = require('../models/sellerWalletTransactionModel');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -80,6 +82,15 @@ const updateOrderToPaid = async (req, res) => {
   const order = await Order.findById(req.params.id);
 
   if (order) {
+    if (order.user.toString() !== req.user._id.toString()) {
+      res.status(403);
+      throw new Error('Not authorized to pay for this order');
+    }
+
+    if (order.isPaid) {
+      return res.json(order);
+    }
+
     order.isPaid = true;
     order.paidAt = Date.now();
     // Simulate payment result (like what Chapa would send back)
@@ -89,6 +100,37 @@ const updateOrderToPaid = async (req, res) => {
       update_time: req.body.update_time,
       email_address: req.body.email_address,
     };
+
+    // Aggregate seller revenue per seller from the paid order.
+    const sellerRevenueMap = new Map();
+    for (const item of order.orderItems) {
+      if (!item.seller) continue;
+      const sellerId = item.seller.toString();
+      const currentAmount = sellerRevenueMap.get(sellerId) || 0;
+      sellerRevenueMap.set(sellerId, currentAmount + Number(item.sellerRevenue || 0));
+    }
+
+    // Credit each seller wallet once for this order.
+    for (const [sellerId, amount] of sellerRevenueMap.entries()) {
+      if (amount <= 0) continue;
+
+      const existingTx = await SellerWalletTransaction.findOne({
+        seller: sellerId,
+        order: order._id,
+        type: 'CREDIT',
+      });
+
+      if (!existingTx) {
+        await Seller.findByIdAndUpdate(sellerId, { $inc: { walletBalance: amount } });
+        await SellerWalletTransaction.create({
+          seller: sellerId,
+          order: order._id,
+          amount,
+          type: 'CREDIT',
+          note: `Order payment settled: ${order._id}`,
+        });
+      }
+    }
 
     const updatedOrder = await order.save();
     res.json(updatedOrder);

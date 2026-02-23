@@ -30,6 +30,13 @@ export const sellersApiSlice = apiSlice.injectEndpoints({
         method: 'POST',
       }),
     }),
+
+    getSellerWallet: builder.query({
+      query: () => ({
+        url: '/api/sellers/wallet',
+      }),
+      keepUnusedDataFor: 5,
+    }),
     
   }),
 });
@@ -37,5 +44,6 @@ export const sellersApiSlice = apiSlice.injectEndpoints({
 export const { 
   useSellerLoginMutation, 
   useSellerRegisterMutation, 
-  useSellerLogoutApiMutation 
+  useSellerLogoutApiMutation,
+  useGetSellerWalletQuery,
 } = sellersApiSlice;

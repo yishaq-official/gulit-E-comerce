@@ -1,5 +1,6 @@
 const Seller = require('../models/sellerModel');
 const { generateToken } = require('./authController');
+const SellerWalletTransaction = require('../models/sellerWalletTransactionModel');
 
 // @desc    Register a new seller (with KYC documents)
 // @route   POST /api/sellers
@@ -96,8 +97,34 @@ const logoutSeller = (req, res) => {
   });
   res.status(200).json({ message: 'Seller logged out successfully' });
 };
+
+// @desc    Get seller wallet summary + recent transactions
+// @route   GET /api/sellers/wallet
+// @access  Private/Seller
+const getSellerWallet = async (req, res) => {
+  try {
+    const seller = await Seller.findById(req.seller._id).select('walletBalance');
+
+    if (!seller) {
+      return res.status(404).json({ message: 'Seller not found' });
+    }
+
+    const transactions = await SellerWalletTransaction.find({ seller: req.seller._id })
+      .populate('order', '_id totalPrice paidAt createdAt')
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    res.json({
+      walletBalance: Number(seller.walletBalance || 0),
+      transactions,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
 module.exports = {
   registerSeller,
   authSeller,
-  logoutSeller
+  logoutSeller,
+  getSellerWallet,
 };
