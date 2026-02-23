@@ -27,16 +27,14 @@ const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // 3. Hash the password (Security Best Practice)
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const normalizedRole = role === 'admin' ? 'admin' : (role === 'seller' ? 'seller' : 'buyer');
 
         // 4. Create the user
         const user = await User.create({
             name,
             email,
-            password: hashedPassword,
-            role: role || 'buyer', // Default to buyer if no role sent
+            password,
+            role: normalizedRole,
             sellerProfile: role === 'seller' ? { shopName } : {} 
         });
 
@@ -45,7 +43,7 @@ const registerUser = async (req, res) => {
                 _id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+                role: user.role || 'buyer',
                 token: generateToken(user._id), // Send the token immediately
             });
         } else {
@@ -73,7 +71,7 @@ const loginUser = async (req, res) => {
                 _id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
+                role: user.role || 'buyer',
                 token: generateToken(user._id),
             });
         } else {
@@ -117,8 +115,7 @@ const updateUserProfile = async (req, res) => {
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
-            isAdmin: updatedUser.isAdmin, // or role
-            role: updatedUser.role,       // Keep role consistent
+            role: updatedUser.role || 'buyer',
         });
     } else {
         res.status(404);

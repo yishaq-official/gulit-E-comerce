@@ -73,7 +73,7 @@ const AdminLoginScreen = () => {
           </p>
           <div className="mt-8 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl p-4">
             <p className="text-cyan-200 text-sm flex items-center gap-2">
-              <FaShieldAlt /> Admin endpoints are restricted to users with `isAdmin: true`.
+              <FaShieldAlt /> Admin endpoints are restricted to users with `role: 'admin'`.
             </p>
           </div>
         </div>

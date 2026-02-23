@@ -85,7 +85,7 @@ const AccountMenu = () => {
           </Link>
 
           {/* Admin Dashboard Link (Only shows if admin) */}
-          {userInfo.isAdmin && (
+          {userInfo.role === 'admin' && (
             <Link 
               to="/admin/dashboard" 
               onClick={() => setIsOpen(false)}

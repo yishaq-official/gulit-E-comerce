@@ -14,7 +14,8 @@ const adminLogin = async (req, res) => {
   }
 
   const user = await User.findOne({ email });
-  if (!user || !user.isAdmin) {
+  const hasAdminAccess = Boolean(user && user.role === 'admin');
+  if (!hasAdminAccess) {
     return res.status(401).json({ message: 'Invalid admin credentials' });
   }
 
@@ -27,7 +28,7 @@ const adminLogin = async (req, res) => {
     _id: user._id,
     name: user.name,
     email: user.email,
-    isAdmin: user.isAdmin,
+    role: user.role,
     token: generateToken(user._id),
   });
 };
@@ -43,7 +44,7 @@ const adminForgotPassword = async (req, res) => {
 
   const user = await User.findOne({ email });
   // Always return generic success-like response to avoid account enumeration.
-  if (!user || !user.isAdmin) {
+  if (!user || user.role !== 'admin') {
     return res.json({ message: 'If the account exists, reset instructions have been sent.' });
   }
 
@@ -80,7 +81,7 @@ const adminResetPassword = async (req, res) => {
   const user = await User.findOne({
     resetPasswordToken: hashedToken,
     resetPasswordExpires: { $gt: new Date() },
-    isAdmin: true,
+    role: 'admin',
   });
 
   if (!user) {
@@ -105,7 +106,8 @@ const adminGoogleLogin = async (req, res) => {
   }
 
   const user = await User.findOne({ email });
-  if (!user || !user.isAdmin) {
+  const hasAdminAccess = Boolean(user && user.role === 'admin');
+  if (!hasAdminAccess) {
     return res.status(401).json({ message: 'This Google account is not linked to an admin profile' });
   }
 
@@ -117,7 +119,7 @@ const adminGoogleLogin = async (req, res) => {
     _id: user._id,
     name: user.name,
     email: user.email,
-    isAdmin: user.isAdmin,
+    role: user.role,
     token: generateToken(user._id),
   });
 };
@@ -130,7 +132,7 @@ const getAdminProfile = async (req, res) => {
     _id: req.user._id,
     name: req.user.name,
     email: req.user.email,
-    isAdmin: req.user.isAdmin,
+    role: req.user.role,
   });
 };
 
