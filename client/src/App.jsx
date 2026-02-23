@@ -36,6 +36,7 @@ import SellerProductListScreen from './pages/seller/SellerProductListScreen';
 import SellerProductEditScreen from './pages/seller/SellerProductEditScreen';
 import SellerOrderListScreen from './pages/seller/SellerOrderListScreen';
 import SellerOrderDetailsScreen from './pages/seller/SellerOrderDetailsScreen';
+import SellerWalletScreen from './pages/seller/SellerWalletScreen';
 
 
 const App = () => {
@@ -92,6 +93,7 @@ const App = () => {
           <Route path="/seller/products/:id/edit" element={<SellerProductEditScreen />} />
           <Route path="/seller/orders" element={<SellerOrderListScreen />} />
           <Route path="/seller/order/:id" element={<SellerOrderDetailsScreen />} />
+          <Route path="/seller/wallet" element={<SellerWalletScreen />} />
           </Route>
         </Route>
 
