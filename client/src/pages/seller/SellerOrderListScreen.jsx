@@ -5,7 +5,8 @@ import { useGetSellerOrdersQuery } from '../../store/slices/sellerProductsApiSli
 import Loader from '../../components/Loader';
 
 const SellerOrderListScreen = () => {
-  const { data: orders, isLoading, error } = useGetSellerOrdersQuery();
+  const { data: orders = [], isLoading, error } = useGetSellerOrdersQuery();
+  const formatDate = (value) => (value ? String(value).substring(0, 10) : 'N/A');
 
   return (
     <div className="w-full max-w-7xl mx-auto animate-fade-in-up pb-20">
@@ -48,16 +49,16 @@ const SellerOrderListScreen = () => {
               <tbody className="divide-y divide-gray-700/50">
                 {orders.map((order) => (
                   <tr key={order._id} className="hover:bg-white/5 transition-colors group">
-                    <td className="p-5 text-sm font-bold text-gray-300">...{order._id.substring(order._id.length - 6)}</td>
-                    <td className="p-5 text-sm text-gray-400">{order.createdAt.substring(0, 10)}</td>
+                    <td className="p-5 text-sm font-bold text-gray-300">...{String(order?._id || '').slice(-6) || 'N/A'}</td>
+                    <td className="p-5 text-sm text-gray-400">{formatDate(order?.createdAt)}</td>
                     <td className="p-5 text-sm font-medium text-white">{order.user ? order.user.name : 'Deleted User'}</td>
                     <td className="p-5 text-sm font-black text-green-400">
-                      ETB {order.totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      ETB {Number(order?.totalPrice || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                     <td className="p-5">
                       {order.isPaid ? (
                         <div className="bg-green-500/10 text-green-500 border border-green-500/20 px-3 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5">
-                          <FaCheck /> {order.paidAt.substring(0, 10)}
+                          <FaCheck /> {formatDate(order?.paidAt)}
                         </div>
                       ) : (
                         <div className="bg-red-500/10 text-red-500 border border-red-500/20 px-3 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5">
@@ -68,7 +69,7 @@ const SellerOrderListScreen = () => {
                     <td className="p-5">
                       {order.isDelivered ? (
                         <div className="bg-blue-500/10 text-blue-500 border border-blue-500/20 px-3 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5">
-                          <FaCheck /> {order.deliveredAt.substring(0, 10)}
+                          <FaCheck /> {formatDate(order?.deliveredAt)}
                         </div>
                       ) : (
                         <div className="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-md text-xs font-bold inline-flex items-center gap-1.5">
