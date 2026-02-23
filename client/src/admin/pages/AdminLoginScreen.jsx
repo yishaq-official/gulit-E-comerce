@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -19,10 +19,60 @@ const AdminLoginScreen = () => {
   const { adminInfo } = useSelector((state) => state.adminAuth);
   const [adminLogin, { isLoading }] = useAdminLoginMutation();
   const [adminGoogleLogin, { isLoading: loadingGoogle }] = useAdminGoogleLoginMutation();
+  const googleBtnRef = useRef(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     if (adminInfo) navigate('/admin/dashboard');
   }, [adminInfo, navigate]);
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const initGoogle = () => {
+      if (!window.google?.accounts?.id || !googleBtnRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response) => {
+          try {
+            const res = await adminGoogleLogin({
+              credential: response.credential,
+            }).unwrap();
+            dispatch(setAdminCredentials(res));
+            toast.success('Logged in with Google');
+            navigate('/admin/dashboard');
+          } catch (err) {
+            toast.error(err?.data?.message || err.error);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 380,
+        text: 'signin_with',
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      initGoogle();
+      return;
+    }
+
+    const existing = document.querySelector('script[data-google-identity="true"]');
+    if (existing) {
+      existing.addEventListener('load', initGoogle);
+      return () => existing.removeEventListener('load', initGoogle);
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleIdentity = 'true';
+    script.onload = initGoogle;
+    document.body.appendChild(script);
+  }, [adminGoogleLogin, dispatch, googleClientId, navigate]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -30,26 +80,6 @@ const AdminLoginScreen = () => {
       const res = await adminLogin({ email, password }).unwrap();
       dispatch(setAdminCredentials(res));
       toast.success('Admin login successful');
-      navigate('/admin/dashboard');
-    } catch (err) {
-      toast.error(err?.data?.message || err.error);
-    }
-  };
-
-  const googleLoginHandler = async () => {
-    const googleEmail = window.prompt('Google Email');
-    if (!googleEmail) return;
-    const googleName = window.prompt('Google Name') || 'Admin User';
-    const googleId = `google-${Date.now()}`;
-
-    try {
-      const res = await adminGoogleLogin({
-        email: googleEmail.trim(),
-        name: googleName.trim(),
-        googleId,
-      }).unwrap();
-      dispatch(setAdminCredentials(res));
-      toast.success('Logged in with Google');
       navigate('/admin/dashboard');
     } catch (err) {
       toast.error(err?.data?.message || err.error);
@@ -121,15 +151,16 @@ const AdminLoginScreen = () => {
           </form>
 
           <div className="my-6 border-t border-gray-800 pt-6">
-            <button
-              type="button"
-              onClick={googleLoginHandler}
-              disabled={loadingGoogle}
-              className="w-full inline-flex items-center justify-center gap-3 bg-[#0b1220] border border-gray-700 hover:border-cyan-500/40 text-white font-bold py-3.5 rounded-xl transition-colors"
-            >
-              <FaGoogle className="text-red-400" />
-              {loadingGoogle ? 'Connecting...' : 'Login with Google'}
-            </button>
+            {googleClientId ? (
+              <div className="flex justify-center">
+                <div ref={googleBtnRef} className={loadingGoogle ? 'opacity-60 pointer-events-none' : ''} />
+              </div>
+            ) : (
+              <div className="w-full inline-flex items-center justify-center gap-3 bg-[#0b1220] border border-gray-700 text-gray-400 font-bold py-3.5 rounded-xl">
+                <FaGoogle className="text-red-400" />
+                Google login disabled: set `VITE_GOOGLE_CLIENT_ID`
+              </div>
+            )}
           </div>
         </div>
       </div>

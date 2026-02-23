@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { FaArrowLeft, FaEnvelope, FaKey } from 'react-icons/fa';
+import { FaArrowLeft, FaEnvelope } from 'react-icons/fa';
 import { useAdminForgotPasswordMutation } from '../slices/adminApiSlice';
 
 const AdminForgotPasswordScreen = () => {
   const [email, setEmail] = useState('');
-  const [tokenPreview, setTokenPreview] = useState('');
+  const [submitted, setSubmitted] = useState(false);
   const [forgotPassword, { isLoading }] = useAdminForgotPasswordMutation();
 
   const submitHandler = async (e) => {
@@ -14,7 +14,7 @@ const AdminForgotPasswordScreen = () => {
     try {
       const res = await forgotPassword({ email }).unwrap();
       toast.success(res.message || 'Reset request submitted');
-      if (res.resetToken) setTokenPreview(res.resetToken);
+      setSubmitted(true);
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
@@ -27,7 +27,7 @@ const AdminForgotPasswordScreen = () => {
           <FaArrowLeft /> Back to Login
         </Link>
         <h1 className="text-3xl font-black mb-2">Forgot Password</h1>
-        <p className="text-gray-400 mb-6">Enter your admin email to generate a reset token.</p>
+        <p className="text-gray-400 mb-6">Enter your admin email and we will send a reset link.</p>
         <form onSubmit={submitHandler} className="space-y-4">
           <label className="block text-sm font-bold text-gray-400">Admin Email</label>
           <div className="relative">
@@ -45,18 +45,17 @@ const AdminForgotPasswordScreen = () => {
             disabled={isLoading}
             className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#09111f] font-black py-3.5 rounded-xl transition-colors disabled:opacity-70"
           >
-            {isLoading ? 'Processing...' : 'Generate Reset Token'}
+            {isLoading ? 'Processing...' : 'Send Reset Link'}
           </button>
         </form>
 
-        {tokenPreview && (
+        {submitted && (
           <div className="mt-6 bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4">
-            <p className="text-sm text-cyan-200 font-bold flex items-center gap-2 mb-2">
-              <FaKey /> Reset Token (Demo)
+            <p className="text-sm text-cyan-200 font-bold mb-2">
+              Check your email
             </p>
-            <code className="text-xs text-cyan-100 break-all">{tokenPreview}</code>
             <p className="text-xs text-gray-400 mt-2">
-              Use this token on the reset password page: `/admin/reset-password/:token`.
+              If your account exists and email delivery is configured, you will receive a password reset link shortly.
             </p>
           </div>
         )}
