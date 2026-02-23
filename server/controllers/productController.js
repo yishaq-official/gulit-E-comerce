@@ -5,15 +5,25 @@ const Order = require('../models/orderModel');
 // @route   GET /api/products
 // @access  Public
 const getProducts = async (req, res) => {
+  try{
     // 1. Check if the frontend sent a search word
     const keyword = req.query.keyword 
         ? { name: { $regex: req.query.keyword, $options: 'i' } } // 'i' means case-insensitive
         : {};
 
-    // 2. Find products that match the keyword (or all if no keyword)
-    const products = await Product.find({ ...keyword });
+    // 2. Check if the frontend sent a category filter
+    const category = req.query.category 
+            ? { category: { $regex: req.query.category, $options: 'i' } } 
+            : {};
+
+    // 3. Find products that match the keyword AND/OR category
+    const products = await Product.find({ ...keyword, ...category });
     
     res.json(products);
+  }
+  catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
 };
 // @desc    Fetch single product
 // @route   GET /api/products/:id
