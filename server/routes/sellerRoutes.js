@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const { registerSeller, authSeller, logoutSeller, getSellerWallet } = require('../controllers/sellerController');
+const { getSellerSettings, updateSellerSettings } = require('../controllers/sellerSettingsController');
 const { uploadSellerDocs } = require('../middleware/uploadMiddleware');
 // 👇 1. Import the new controller and the protect middleware
 const { getSellerOrders, getSellerOrderById, updateOrderToDelivered } = require('../controllers/sellerOrderController');
@@ -11,6 +12,7 @@ router.post('/', uploadSellerDocs, registerSeller);
 router.post('/login', authSeller);
 router.post('/logout', logoutSeller);
 router.get('/wallet', protectSeller, getSellerWallet);
+router.route('/settings').get(protectSeller, getSellerSettings).put(protectSeller, updateSellerSettings);
 
 // 👇 2. Add the secure orders route
 router.route('/orders').get(protectSeller, getSellerOrders);

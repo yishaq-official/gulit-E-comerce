@@ -37,6 +37,21 @@ export const sellersApiSlice = apiSlice.injectEndpoints({
       }),
       keepUnusedDataFor: 5,
     }),
+
+    getSellerSettings: builder.query({
+      query: () => ({
+        url: '/api/sellers/settings',
+      }),
+      keepUnusedDataFor: 5,
+    }),
+
+    updateSellerSettings: builder.mutation({
+      query: (data) => ({
+        url: '/api/sellers/settings',
+        method: 'PUT',
+        body: data,
+      }),
+    }),
     
   }),
 });
@@ -46,4 +61,6 @@ export const {
   useSellerRegisterMutation, 
   useSellerLogoutApiMutation,
   useGetSellerWalletQuery,
+  useGetSellerSettingsQuery,
+  useUpdateSellerSettingsMutation,
 } = sellersApiSlice;
