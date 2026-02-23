@@ -8,6 +8,7 @@ import { BASE_URL } from '../store/slices/apiSlice';
 
 const OrderScreen = () => {
   const { id: orderId } = useParams();
+  const formatDate = (value) => (value ? String(value).substring(0, 10) : 'N/A');
 
   // 1. Fetch Data
   const { data: order, refetch, isLoading, error } = useGetOrderDetailsQuery(orderId);
@@ -57,7 +58,7 @@ const OrderScreen = () => {
                </p>
                {order.isDelivered ? (
                  <div className="bg-green-100 text-green-700 px-4 py-3 rounded-xl font-bold flex items-center gap-2">
-                    <FaCheckCircle /> Delivered on {order.deliveredAt.substring(0, 10)}
+                    <FaCheckCircle /> Delivered on {formatDate(order.deliveredAt)}
                  </div>
                ) : (
                  <div className="bg-yellow-50 text-yellow-700 px-4 py-3 rounded-xl font-bold flex items-center gap-2">
@@ -76,7 +77,7 @@ const OrderScreen = () => {
                </p>
                {order.isPaid ? (
                  <div className="bg-green-100 text-green-700 px-4 py-3 rounded-xl font-bold flex items-center gap-2">
-                    <FaCheckCircle /> Paid on {order.paidAt.substring(0, 10)}
+                    <FaCheckCircle /> Paid on {formatDate(order.paidAt)}
                  </div>
                ) : (
                  <div className="bg-red-50 text-red-600 px-4 py-3 rounded-xl font-bold flex items-center gap-2">
