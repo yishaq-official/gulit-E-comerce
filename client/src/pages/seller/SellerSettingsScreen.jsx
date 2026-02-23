@@ -67,14 +67,6 @@ const defaultForm = {
     paypalEmail: '',
     stripeAccountId: '',
   },
-  storePolicies: {
-    returnPolicy: '',
-    refundPolicy: '',
-    warrantyPolicy: '',
-    cancellationPolicy: '',
-    privacyPolicy: '',
-    shippingPolicy: '',
-  },
   notificationSettings: {
     emailNewOrder: true,
     emailOrderCancelled: true,
@@ -127,6 +119,13 @@ const textToArray = (value) =>
 
 const arrayToText = (value) => (Array.isArray(value) ? value.join(', ') : '');
 
+const FieldBlock = ({ label, children, className = '' }) => (
+  <div className={className}>
+    <label className="block text-sm font-bold text-gray-400 mb-2">{label}</label>
+    {children}
+  </div>
+);
+
 const SellerSettingsScreen = () => {
   const { data, isLoading, error, refetch } = useGetSellerSettingsQuery();
   const [updateSettings, { isLoading: saving }] = useUpdateSellerSettingsMutation();
@@ -173,7 +172,6 @@ const SellerSettingsScreen = () => {
           ...(settingsData.paymentPayoutSettings?.payoutMethods || {}),
         },
       },
-      storePolicies: { ...prev.storePolicies, ...(settingsData.storePolicies || {}) },
       notificationSettings: { ...prev.notificationSettings, ...(settingsData.notificationSettings || {}) },
       shopAppearance: {
         ...prev.shopAppearance,
@@ -293,25 +291,37 @@ const SellerSettingsScreen = () => {
         <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
           <h2 className="text-xl font-bold text-white mb-5">1. Basic Shop Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input value={form.basicShopInfo.shopName} onChange={(e) => setField('basicShopInfo', 'shopName', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Shop Name" />
-            <input value={form.basicShopInfo.shopSlug} onChange={(e) => setField('basicShopInfo', 'shopSlug', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Shop URL Slug" />
-            <select value={form.basicShopInfo.businessCategory} onChange={(e) => setField('basicShopInfo', 'businessCategory', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white">
-              <option>Electronics</option>
-              <option>Fashion</option>
-              <option>Home & Kitchen</option>
-              <option>Beauty</option>
-              <option>Books</option>
-              <option>Other</option>
-            </select>
-            <select value={form.basicShopInfo.businessType} onChange={(e) => setField('basicShopInfo', 'businessType', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white">
-              <option>Individual</option>
-              <option>Company</option>
-              <option>Manufacturer</option>
-              <option>Distributor</option>
-            </select>
-            <input type="number" value={form.basicShopInfo.yearEstablished || ''} onChange={(e) => setField('basicShopInfo', 'yearEstablished', Number(e.target.value) || '')} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Year Established" />
+            <FieldBlock label="Shop Name">
+              <input value={form.basicShopInfo.shopName} onChange={(e) => setField('basicShopInfo', 'shopName', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Shop URL Slug">
+              <input value={form.basicShopInfo.shopSlug} onChange={(e) => setField('basicShopInfo', 'shopSlug', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Business Category">
+              <select value={form.basicShopInfo.businessCategory} onChange={(e) => setField('basicShopInfo', 'businessCategory', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white">
+                <option>Electronics</option>
+                <option>Fashion</option>
+                <option>Home & Kitchen</option>
+                <option>Beauty</option>
+                <option>Books</option>
+                <option>Other</option>
+              </select>
+            </FieldBlock>
+            <FieldBlock label="Business Type">
+              <select value={form.basicShopInfo.businessType} onChange={(e) => setField('basicShopInfo', 'businessType', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white">
+                <option>Individual</option>
+                <option>Company</option>
+                <option>Manufacturer</option>
+                <option>Distributor</option>
+              </select>
+            </FieldBlock>
+            <FieldBlock label="Year Established">
+              <input type="number" value={form.basicShopInfo.yearEstablished || ''} onChange={(e) => setField('basicShopInfo', 'yearEstablished', Number(e.target.value) || '')} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
           </div>
-          <textarea value={form.basicShopInfo.shopDescription} onChange={(e) => setField('basicShopInfo', 'shopDescription', e.target.value)} rows="4" className="w-full mt-4 bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Shop Description" />
+          <FieldBlock label="Shop Description" className="mt-4">
+            <textarea value={form.basicShopInfo.shopDescription} onChange={(e) => setField('basicShopInfo', 'shopDescription', e.target.value)} rows="4" className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+          </FieldBlock>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
               <p className="text-sm font-bold text-gray-400 mb-2">Shop Logo</p>
@@ -335,18 +345,40 @@ const SellerSettingsScreen = () => {
         <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
           <h2 className="text-xl font-bold text-white mb-5">2. Seller Profile / Business Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input value={form.businessInfo.legalBusinessName} onChange={(e) => setField('businessInfo', 'legalBusinessName', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Legal Business Name" />
-            <input value={form.businessInfo.businessRegistrationNumber} onChange={(e) => setField('businessInfo', 'businessRegistrationNumber', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Business Registration Number" />
-            <input value={form.businessInfo.taxIdVatNumber} onChange={(e) => setField('businessInfo', 'taxIdVatNumber', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Tax ID / VAT Number" />
-            <input value={form.businessInfo.country} onChange={(e) => setField('businessInfo', 'country', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Country" />
-            <input value={form.businessInfo.contactEmail} onChange={(e) => setField('businessInfo', 'contactEmail', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Contact Email" />
-            <input value={form.businessInfo.contactPhone} onChange={(e) => setField('businessInfo', 'contactPhone', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Contact Phone" />
-            <input value={form.businessInfo.mobileMoneyNumber} onChange={(e) => setField('businessInfo', 'mobileMoneyNumber', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Mobile Money Number" />
-            <input value={form.businessInfo.bankAccountDetails.bankName} onChange={(e) => setNestedField('businessInfo', 'bankAccountDetails', 'bankName', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Bank Name" />
-            <input value={form.businessInfo.bankAccountDetails.accountNumber} onChange={(e) => setNestedField('businessInfo', 'bankAccountDetails', 'accountNumber', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Account Number" />
-            <input value={form.businessInfo.bankAccountDetails.accountHolderName} onChange={(e) => setNestedField('businessInfo', 'bankAccountDetails', 'accountHolderName', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Account Holder Name" />
+            <FieldBlock label="Legal Business Name">
+              <input value={form.businessInfo.legalBusinessName} onChange={(e) => setField('businessInfo', 'legalBusinessName', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Business Registration Number">
+              <input value={form.businessInfo.businessRegistrationNumber} onChange={(e) => setField('businessInfo', 'businessRegistrationNumber', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Tax ID / VAT Number">
+              <input value={form.businessInfo.taxIdVatNumber} onChange={(e) => setField('businessInfo', 'taxIdVatNumber', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Country">
+              <input value={form.businessInfo.country} onChange={(e) => setField('businessInfo', 'country', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Contact Email">
+              <input value={form.businessInfo.contactEmail} onChange={(e) => setField('businessInfo', 'contactEmail', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Contact Phone">
+              <input value={form.businessInfo.contactPhone} onChange={(e) => setField('businessInfo', 'contactPhone', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Mobile Money Number">
+              <input value={form.businessInfo.mobileMoneyNumber} onChange={(e) => setField('businessInfo', 'mobileMoneyNumber', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Bank Name">
+              <input value={form.businessInfo.bankAccountDetails.bankName} onChange={(e) => setNestedField('businessInfo', 'bankAccountDetails', 'bankName', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Bank Account Number">
+              <input value={form.businessInfo.bankAccountDetails.accountNumber} onChange={(e) => setNestedField('businessInfo', 'bankAccountDetails', 'accountNumber', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Account Holder Name">
+              <input value={form.businessInfo.bankAccountDetails.accountHolderName} onChange={(e) => setNestedField('businessInfo', 'bankAccountDetails', 'accountHolderName', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
           </div>
-          <textarea value={form.businessInfo.businessAddress} onChange={(e) => setField('businessInfo', 'businessAddress', e.target.value)} rows="3" className="w-full mt-4 bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Business Address" />
+          <FieldBlock label="Business Address" className="mt-4">
+            <textarea value={form.businessInfo.businessAddress} onChange={(e) => setField('businessInfo', 'businessAddress', e.target.value)} rows="3" className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+          </FieldBlock>
 
           <div className="mt-4">
             <p className="text-sm font-bold text-gray-400 mb-2">Identity Verification Documents</p>
@@ -367,19 +399,35 @@ const SellerSettingsScreen = () => {
         <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
           <h2 className="text-xl font-bold text-white mb-5">3. Shipping Settings</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input value={form.shippingSettings.defaultShippingCountry} onChange={(e) => setField('shippingSettings', 'defaultShippingCountry', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Default Shipping Country" />
-            <input type="number" value={form.shippingSettings.processingTimeDays} onChange={(e) => setField('shippingSettings', 'processingTimeDays', Number(e.target.value) || 0)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Processing Time (days)" />
-            <input value={supportedCountriesInput} onChange={(e) => setSupportedCountriesInput(e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white md:col-span-2" placeholder="Supported Countries (comma-separated)" />
-            <input type="number" value={form.shippingSettings.handlingFee} onChange={(e) => setField('shippingSettings', 'handlingFee', Number(e.target.value) || 0)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Handling Fee" />
-            <select value={form.shippingSettings.shippingCostRules.mode} onChange={(e) => setNestedField('shippingSettings', 'shippingCostRules', 'mode', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white">
-              <option value="per_product">Per Product</option>
-              <option value="per_weight">Per Weight</option>
-              <option value="per_region">Per Region</option>
-            </select>
-            <input type="number" value={form.shippingSettings.shippingCostRules.flatAmount} onChange={(e) => setNestedField('shippingSettings', 'shippingCostRules', 'flatAmount', Number(e.target.value) || 0)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Flat Shipping Cost" />
-            <input value={warehouseInput} onChange={(e) => setWarehouseInput(e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Warehouse Locations (comma-separated)" />
+            <FieldBlock label="Default Shipping Country">
+              <input value={form.shippingSettings.defaultShippingCountry} onChange={(e) => setField('shippingSettings', 'defaultShippingCountry', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Processing Time (days)">
+              <input type="number" value={form.shippingSettings.processingTimeDays} onChange={(e) => setField('shippingSettings', 'processingTimeDays', Number(e.target.value) || 0)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Supported Countries (comma separated)" className="md:col-span-2">
+              <input value={supportedCountriesInput} onChange={(e) => setSupportedCountriesInput(e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Handling Fee">
+              <input type="number" value={form.shippingSettings.handlingFee} onChange={(e) => setField('shippingSettings', 'handlingFee', Number(e.target.value) || 0)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Shipping Cost Rule">
+              <select value={form.shippingSettings.shippingCostRules.mode} onChange={(e) => setNestedField('shippingSettings', 'shippingCostRules', 'mode', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white">
+                <option value="per_product">Per Product</option>
+                <option value="per_weight">Per Weight</option>
+                <option value="per_region">Per Region</option>
+              </select>
+            </FieldBlock>
+            <FieldBlock label="Flat Shipping Cost">
+              <input type="number" value={form.shippingSettings.shippingCostRules.flatAmount} onChange={(e) => setNestedField('shippingSettings', 'shippingCostRules', 'flatAmount', Number(e.target.value) || 0)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Warehouse Locations (comma separated)">
+              <input value={warehouseInput} onChange={(e) => setWarehouseInput(e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
           </div>
-          <textarea value={form.shippingSettings.returnAddress} onChange={(e) => setField('shippingSettings', 'returnAddress', e.target.value)} rows="3" className="w-full mt-4 bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Return Address" />
+          <FieldBlock label="Return Address" className="mt-4">
+            <textarea value={form.shippingSettings.returnAddress} onChange={(e) => setField('shippingSettings', 'returnAddress', e.target.value)} rows="3" className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+          </FieldBlock>
           <div className="mt-4 flex flex-wrap gap-4 text-gray-300">
             <label><input type="checkbox" checked={form.shippingSettings.shippingMethods.standardShipping} onChange={(e) => setNestedField('shippingSettings', 'shippingMethods', 'standardShipping', e.target.checked)} className="mr-2" />Standard Shipping</label>
             <label><input type="checkbox" checked={form.shippingSettings.shippingMethods.expressShipping} onChange={(e) => setNestedField('shippingSettings', 'shippingMethods', 'expressShipping', e.target.checked)} className="mr-2" />Express Shipping</label>
@@ -390,10 +438,18 @@ const SellerSettingsScreen = () => {
         <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
           <h2 className="text-xl font-bold text-white mb-5">4. Payment & Payout Settings</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="number" value={form.paymentPayoutSettings.minimumPayoutThreshold} onChange={(e) => setField('paymentPayoutSettings', 'minimumPayoutThreshold', Number(e.target.value) || 0)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Minimum Payout Threshold" />
-            <input value={form.paymentPayoutSettings.paypalEmail} onChange={(e) => setField('paymentPayoutSettings', 'paypalEmail', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="PayPal Email" />
-            <input value={form.paymentPayoutSettings.stripeAccountId} onChange={(e) => setField('paymentPayoutSettings', 'stripeAccountId', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Stripe Account ID" />
-            <input value={String(form.adminControlled.commissionPercentage)} readOnly className="bg-[#0b1220] border border-gray-700 rounded-xl px-4 py-3 text-gray-400" placeholder="Commission Rate (Read-only)" />
+            <FieldBlock label="Minimum Payout Threshold">
+              <input type="number" value={form.paymentPayoutSettings.minimumPayoutThreshold} onChange={(e) => setField('paymentPayoutSettings', 'minimumPayoutThreshold', Number(e.target.value) || 0)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="PayPal Email">
+              <input value={form.paymentPayoutSettings.paypalEmail} onChange={(e) => setField('paymentPayoutSettings', 'paypalEmail', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Stripe Account ID">
+              <input value={form.paymentPayoutSettings.stripeAccountId} onChange={(e) => setField('paymentPayoutSettings', 'stripeAccountId', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Commission Rate (Read-only)">
+              <input value={String(form.adminControlled.commissionPercentage)} readOnly className="w-full bg-[#0b1220] border border-gray-700 rounded-xl px-4 py-3 text-gray-400" />
+            </FieldBlock>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-gray-300">
             <label><input type="checkbox" checked={form.paymentPayoutSettings.autoPayoutEnabled} onChange={(e) => setField('paymentPayoutSettings', 'autoPayoutEnabled', e.target.checked)} className="mr-2" />Auto Payout</label>
@@ -406,23 +462,7 @@ const SellerSettingsScreen = () => {
         </section>
 
         <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-5">5. Store Policies</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {['returnPolicy', 'refundPolicy', 'warrantyPolicy', 'cancellationPolicy', 'privacyPolicy', 'shippingPolicy'].map((key) => (
-              <textarea
-                key={key}
-                rows="4"
-                value={form.storePolicies[key]}
-                onChange={(e) => setField('storePolicies', key, e.target.value)}
-                className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white"
-                placeholder={key}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-5">6. Notifications</h2>
+          <h2 className="text-xl font-bold text-white mb-5">5. Notifications</h2>
           <div className="flex flex-wrap gap-4 text-gray-300">
             <label><input type="checkbox" checked={form.notificationSettings.emailNewOrder} onChange={(e) => setField('notificationSettings', 'emailNewOrder', e.target.checked)} className="mr-2" />Email: New Order</label>
             <label><input type="checkbox" checked={form.notificationSettings.emailOrderCancelled} onChange={(e) => setField('notificationSettings', 'emailOrderCancelled', e.target.checked)} className="mr-2" />Email: Order Cancelled</label>
@@ -433,12 +473,20 @@ const SellerSettingsScreen = () => {
         </section>
 
         <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-5">7 & 8. Appearance and Social Links</h2>
+          <h2 className="text-xl font-bold text-white mb-5">6 & 7. Appearance and Social Links</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <input value={form.shopAppearance.theme} onChange={(e) => setField('shopAppearance', 'theme', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Theme" />
-            <input value={form.shopAppearance.colorScheme} onChange={(e) => setField('shopAppearance', 'colorScheme', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Color Scheme" />
-            <input value={form.shopAppearance.fontStyle} onChange={(e) => setField('shopAppearance', 'fontStyle', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Font Style" />
-            <input value={customBannersInput} onChange={(e) => setCustomBannersInput(e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white md:col-span-3" placeholder="Custom Banners URLs (comma-separated)" />
+            <FieldBlock label="Theme">
+              <input value={form.shopAppearance.theme} onChange={(e) => setField('shopAppearance', 'theme', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Color Scheme">
+              <input value={form.shopAppearance.colorScheme} onChange={(e) => setField('shopAppearance', 'colorScheme', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Font Style">
+              <input value={form.shopAppearance.fontStyle} onChange={(e) => setField('shopAppearance', 'fontStyle', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Custom Banners URLs (comma separated)" className="md:col-span-3">
+              <input value={customBannersInput} onChange={(e) => setCustomBannersInput(e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
           </div>
           <div className="mb-5 flex flex-wrap gap-4 text-gray-300">
             <label><input type="checkbox" checked={form.shopAppearance.homepageLayout.featuredProducts} onChange={(e) => setNestedField('shopAppearance', 'homepageLayout', 'featuredProducts', e.target.checked)} className="mr-2" />Featured Products</label>
@@ -446,19 +494,33 @@ const SellerSettingsScreen = () => {
             <label><input type="checkbox" checked={form.shopAppearance.homepageLayout.newArrivals} onChange={(e) => setNestedField('shopAppearance', 'homepageLayout', 'newArrivals', e.target.checked)} className="mr-2" />New Arrivals</label>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input value={form.socialLinks.facebook} onChange={(e) => setField('socialLinks', 'facebook', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Facebook URL" />
-            <input value={form.socialLinks.instagram} onChange={(e) => setField('socialLinks', 'instagram', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Instagram URL" />
-            <input value={form.socialLinks.telegram} onChange={(e) => setField('socialLinks', 'telegram', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Telegram URL" />
-            <input value={form.socialLinks.websiteUrl} onChange={(e) => setField('socialLinks', 'websiteUrl', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Website URL" />
-            <input value={form.socialLinks.whatsappNumber} onChange={(e) => setField('socialLinks', 'whatsappNumber', e.target.value)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="WhatsApp Number" />
+            <FieldBlock label="Facebook URL">
+              <input value={form.socialLinks.facebook} onChange={(e) => setField('socialLinks', 'facebook', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Instagram URL">
+              <input value={form.socialLinks.instagram} onChange={(e) => setField('socialLinks', 'instagram', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Telegram URL">
+              <input value={form.socialLinks.telegram} onChange={(e) => setField('socialLinks', 'telegram', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Website URL">
+              <input value={form.socialLinks.websiteUrl} onChange={(e) => setField('socialLinks', 'websiteUrl', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="WhatsApp Number">
+              <input value={form.socialLinks.whatsappNumber} onChange={(e) => setField('socialLinks', 'whatsappNumber', e.target.value)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
           </div>
         </section>
 
         <section className="bg-[#1e293b] p-6 rounded-3xl border border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-5">9 & 10. Security and Performance</h2>
+          <h2 className="text-xl font-bold text-white mb-5">8 & 9. Security and Performance</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="number" value={form.performanceSettings.orderAutoConfirmationHours} onChange={(e) => setField('performanceSettings', 'orderAutoConfirmationHours', Number(e.target.value) || 0)} className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Order Auto Confirmation (hours)" />
-            <textarea value={form.performanceSettings.autoReplyMessage} onChange={(e) => setField('performanceSettings', 'autoReplyMessage', e.target.value)} rows="3" className="bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" placeholder="Vacation Auto-reply Message" />
+            <FieldBlock label="Order Auto Confirmation (hours)">
+              <input type="number" value={form.performanceSettings.orderAutoConfirmationHours} onChange={(e) => setField('performanceSettings', 'orderAutoConfirmationHours', Number(e.target.value) || 0)} className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
+            <FieldBlock label="Vacation Auto-reply Message">
+              <textarea value={form.performanceSettings.autoReplyMessage} onChange={(e) => setField('performanceSettings', 'autoReplyMessage', e.target.value)} rows="3" className="w-full bg-[#0f172a] border border-gray-700 rounded-xl px-4 py-3 text-white" />
+            </FieldBlock>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-gray-300">
             <label><input type="checkbox" checked={form.securitySettings.twoFactorEnabled} onChange={(e) => setField('securitySettings', 'twoFactorEnabled', e.target.checked)} className="mr-2" />Enable 2FA</label>
