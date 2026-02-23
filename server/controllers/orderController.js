@@ -98,9 +98,42 @@ const updateOrderToPaid = async (req, res) => {
   }
 };
 
+// @desc    Buyer marks own order as delivered
+// @route   PUT /api/orders/:id/deliver
+// @access  Private (Buyer)
+const updateOrderToDelivered = async (req, res) => {
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    res.status(404);
+    throw new Error('Order not found');
+  }
+
+  if (order.user.toString() !== req.user._id.toString()) {
+    res.status(403);
+    throw new Error('Not authorized to update this order');
+  }
+
+  if (!order.isPaid) {
+    res.status(400);
+    throw new Error('Order must be paid before delivery confirmation');
+  }
+
+  if (order.isDelivered) {
+    return res.json(order);
+  }
+
+  order.isDelivered = true;
+  order.deliveredAt = Date.now();
+
+  const updatedOrder = await order.save();
+  res.json(updatedOrder);
+};
+
 module.exports = {
     addOrderItems,
     getOrderById,
     getMyOrders,
     updateOrderToPaid,
+    updateOrderToDelivered,
 };

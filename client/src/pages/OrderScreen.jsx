@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { useGetOrderDetailsQuery, usePayOrderMutation } from '../store/slices/ordersApiSlice';
+import { useGetOrderDetailsQuery, usePayOrderMutation, useDeliverOrderMutation } from '../store/slices/ordersApiSlice';
+import { useCreateReviewMutation } from '../store/slices/productsApiSlice';
 import Loader from '../components/Loader';
 import { toast } from 'react-toastify';
 import { FaMapMarkerAlt, FaCreditCard, FaShoppingBag, FaBoxOpen, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
@@ -9,12 +10,15 @@ import { BASE_URL } from '../store/slices/apiSlice';
 const OrderScreen = () => {
   const { id: orderId } = useParams();
   const formatDate = (value) => (value ? String(value).substring(0, 10) : 'N/A');
+  const [reviewInputs, setReviewInputs] = useState({});
 
   // 1. Fetch Data
   const { data: order, refetch, isLoading, error } = useGetOrderDetailsQuery(orderId);
 
   // 2. Pay Mutation
   const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+  const [deliverOrder, { isLoading: loadingDeliver }] = useDeliverOrderMutation();
+  const [createReview, { isLoading: loadingReview }] = useCreateReviewMutation();
 
   // 3. Fake Payment Handler
   const successPaymentHandler = async () => {
@@ -26,6 +30,49 @@ const OrderScreen = () => {
       });
       refetch(); // Reload page data to show "Paid" status
       toast.success('Payment Successful!');
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
+
+  const markDeliveredHandler = async () => {
+    try {
+      await deliverOrder(orderId).unwrap();
+      refetch();
+      toast.success('Order marked as delivered');
+    } catch (err) {
+      toast.error(err?.data?.message || err.error);
+    }
+  };
+
+  const setReviewField = (productId, field, value) => {
+    setReviewInputs((prev) => ({
+      ...prev,
+      [productId]: {
+        ...prev[productId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const submitReviewHandler = async (productId) => {
+    const review = reviewInputs[productId] || {};
+    if (!review.rating || !review.comment?.trim()) {
+      toast.error('Please add both rating and comment');
+      return;
+    }
+
+    try {
+      await createReview({
+        productId,
+        rating: Number(review.rating),
+        comment: review.comment.trim(),
+      }).unwrap();
+      toast.success('Review submitted');
+      setReviewInputs((prev) => ({
+        ...prev,
+        [productId]: { rating: '', comment: '' },
+      }));
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
@@ -94,20 +141,57 @@ const OrderScreen = () => {
                <div className="space-y-4">
                  {order.orderItems.map((item, index) => (
                    <div key={index} className="flex items-center justify-between border-b border-gray-50 pb-4 last:border-0">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-start gap-4 w-full">
                          <img 
                            src={`${BASE_URL}${item.image}`} 
                            alt={item.name} 
                            className="w-16 h-16 object-cover rounded-lg" 
                          />
-                         <Link to={`/product/${item.product}`} className="font-bold text-gray-700 hover:text-green-500">
-                           {item.name}
-                         </Link>
+                         <div className="flex-1">
+                           <Link to={`/product/${item.product}`} className="font-bold text-gray-700 hover:text-green-500">
+                             {item.name}
+                           </Link>
+                           <div className="text-sm font-mono text-gray-500 mt-1">
+                             {item.qty} x {item.price} = <span className="font-bold text-gray-800">{(item.qty * item.price).toFixed(2)}</span>
+                           </div>
+
+                           {order.isDelivered && (
+                             <div className="mt-4 bg-gray-50 border border-gray-100 rounded-xl p-4">
+                               <p className="text-sm font-bold text-gray-700 mb-3">Rate this product</p>
+                               <div className="grid grid-cols-1 gap-3">
+                                 <select
+                                   value={reviewInputs[item.product]?.rating || ''}
+                                   onChange={(e) => setReviewField(item.product, 'rating', e.target.value)}
+                                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                                 >
+                                   <option value="">Select rating</option>
+                                   <option value="1">1 - Poor</option>
+                                   <option value="2">2 - Fair</option>
+                                   <option value="3">3 - Good</option>
+                                   <option value="4">4 - Very Good</option>
+                                   <option value="5">5 - Excellent</option>
+                                 </select>
+                                 <textarea
+                                   rows="3"
+                                   value={reviewInputs[item.product]?.comment || ''}
+                                   onChange={(e) => setReviewField(item.product, 'comment', e.target.value)}
+                                   placeholder="Write your comment"
+                                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
+                                 />
+                                 <button
+                                   type="button"
+                                   onClick={() => submitReviewHandler(item.product)}
+                                   disabled={loadingReview}
+                                   className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-black disabled:bg-gray-400"
+                                 >
+                                   Submit Review
+                                 </button>
+                               </div>
+                             </div>
+                           )}
+                         </div>
                       </div>
-                      <div className="text-sm font-mono text-gray-500">
-                         {item.qty} x {item.price} = <span className="font-bold text-gray-800">{(item.qty * item.price).toFixed(2)}</span>
-                      </div>
-                   </div>
+                    </div>
                  ))}
                </div>
             </div>
@@ -150,6 +234,18 @@ const OrderScreen = () => {
                      <p className="text-center text-xs text-gray-400 mt-3">
                         * This is a simulation. No real money is deducted.
                      </p>
+                  </div>
+                )}
+                {order.isPaid && !order.isDelivered && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={markDeliveredHandler}
+                      disabled={loadingDeliver}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-black text-base shadow-lg shadow-blue-200 transition-all disabled:bg-blue-300"
+                    >
+                      {loadingDeliver ? 'Updating...' : 'Mark As Delivered'}
+                    </button>
                   </div>
                 )}
              </div>
