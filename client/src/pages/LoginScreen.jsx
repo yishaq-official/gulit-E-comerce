@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLoginMutation } from '../store/slices/usersApiSlice';
+import { useLoginMutation, useGoogleAuthMutation } from '../store/slices/usersApiSlice';
 import { setCredentials } from '../store/slices/authSlice';
 import { toast } from 'react-toastify';
 import { FaGoogle, FaEnvelope, FaLock } from 'react-icons/fa';
@@ -20,13 +20,62 @@ const LoginScreen = () => {
   const redirect = sp.get('redirect') || '/';
 
   const [login, { isLoading }] = useLoginMutation();
+  const [googleAuth, { isLoading: loadingGoogle }] = useGoogleAuthMutation();
   const { userInfo } = useSelector((state) => state.auth);
+  const googleBtnRef = useRef(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     if (userInfo) {
       navigate(redirect);
     }
   }, [navigate, redirect, userInfo]);
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const initGoogle = () => {
+      if (!window.google?.accounts?.id || !googleBtnRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response) => {
+          try {
+            const res = await googleAuth({ credential: response.credential }).unwrap();
+            dispatch(setCredentials({ ...res }));
+            toast.success('Welcome back!');
+            navigate(redirect);
+          } catch (err) {
+            toast.error(err?.data?.message || err.error);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 360,
+        text: 'signin_with',
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      initGoogle();
+      return;
+    }
+
+    const existing = document.querySelector('script[data-google-identity="true"]');
+    if (existing) {
+      existing.addEventListener('load', initGoogle);
+      return () => existing.removeEventListener('load', initGoogle);
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleIdentity = 'true';
+    script.onload = initGoogle;
+    document.body.appendChild(script);
+  }, [dispatch, googleAuth, googleClientId, navigate, redirect]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -124,10 +173,16 @@ const LoginScreen = () => {
           </div>
 
           {/* Google Button */}
-          <button className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-100 hover:border-gray-300 text-gray-700 py-3.5 rounded-xl font-bold transition-all">
-            <FaGoogle className="text-red-500" />
-            <span>Sign in with Google</span>
-          </button>
+          {googleClientId ? (
+            <div className="flex justify-center">
+              <div ref={googleBtnRef} className={loadingGoogle ? 'opacity-60 pointer-events-none' : ''} />
+            </div>
+          ) : (
+            <button type="button" className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-100 text-gray-400 py-3.5 rounded-xl font-bold transition-all">
+              <FaGoogle className="text-red-500" />
+              <span>Set VITE_GOOGLE_CLIENT_ID to enable Google Sign-in</span>
+            </button>
+          )}
           
           {/* Seller Link */}
            <div className="mt-8 text-center border-t border-gray-50 pt-6">

@@ -11,6 +11,20 @@ export const sellersApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    sellerGoogleLogin: builder.mutation({
+      query: (data) => ({
+        url: '/api/sellers/google/login',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    sellerGoogleIdentity: builder.mutation({
+      query: (data) => ({
+        url: '/api/sellers/google/identity',
+        method: 'POST',
+        body: data,
+      }),
+    }),
 
     // 2. Seller Registration (KYC Uploads)
     // Note: Because we are sending files, the 'data' here will be a native FormData object,
@@ -58,6 +72,8 @@ export const sellersApiSlice = apiSlice.injectEndpoints({
 
 export const { 
   useSellerLoginMutation, 
+  useSellerGoogleLoginMutation,
+  useSellerGoogleIdentityMutation,
   useSellerRegisterMutation, 
   useSellerLogoutApiMutation,
   useGetSellerWalletQuery,

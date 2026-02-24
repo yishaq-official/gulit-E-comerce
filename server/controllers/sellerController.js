@@ -1,6 +1,8 @@
 const Seller = require('../models/sellerModel');
 const { generateToken } = require('./authController');
 const SellerWalletTransaction = require('../models/sellerWalletTransactionModel');
+const crypto = require('crypto');
+const { verifyGoogleCredential } = require('../utils/googleAuth');
 
 // @desc    Register a new seller (with KYC documents)
 // @route   POST /api/sellers
@@ -10,8 +12,25 @@ const registerSeller = async (req, res) => {
     const {
       name, email, password, phoneNumber, nationalIdNumber,
       shopName, shopDescription, shopCategory,
-      street, city, postalCode, country
+      street, city, postalCode, country,
+      googleCredential
     } = req.body;
+
+    let resolvedName = name;
+    let resolvedEmail = email;
+    let resolvedPassword = password;
+
+    if (googleCredential) {
+      const googlePayload = await verifyGoogleCredential(googleCredential);
+      resolvedName = googlePayload.name || resolvedName;
+      resolvedEmail = googlePayload.email || resolvedEmail;
+      // Google registration may not provide manual password.
+      resolvedPassword = resolvedPassword || crypto.randomBytes(24).toString('hex');
+    }
+
+    if (!resolvedName || !resolvedEmail || !resolvedPassword) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
 
     // 1. Ensure Multer successfully caught the files
     if (!req.files || !req.files.idCardImage || !req.files.merchantLicenseImage || !req.files.taxReceiptImage) {
@@ -25,14 +44,17 @@ const registerSeller = async (req, res) => {
     const taxReceiptImage = req.files.taxReceiptImage[0].path.replace(/\\/g, '/');
 
     // 3. Check if seller already exists by email OR shop name
-    const sellerExists = await Seller.findOne({ $or: [{ email }, { shopName }] });
+    const sellerExists = await Seller.findOne({ $or: [{ email: resolvedEmail }, { shopName }] });
     if (sellerExists) {
       return res.status(400).json({ message: 'A seller with that email or shop name already exists' });
     }
 
     // 4. Create the Seller
     const seller = await Seller.create({
-      name, email, password, phoneNumber, nationalIdNumber,
+      name: resolvedName,
+      email: resolvedEmail,
+      password: resolvedPassword,
+      phoneNumber, nationalIdNumber,
       shopName, shopDescription, shopCategory,
       address: { street, city, postalCode, country },
       kycDocuments: { idCardImage, merchantLicenseImage, taxReceiptImage }
@@ -89,6 +111,50 @@ const authSeller = async (req, res) => {
   }
 };
 
+// @desc    Google login for seller workspace
+// @route   POST /api/sellers/google/login
+// @access  Public
+const googleLoginSeller = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    const { email } = await verifyGoogleCredential(credential);
+    const seller = await Seller.findOne({ email });
+
+    if (!seller) {
+      return res.status(401).json({ message: 'No seller account found for this Google email' });
+    }
+
+    if (!seller.isActive) {
+      return res.status(401).json({ message: 'Your account has been suspended. Please contact support.' });
+    }
+
+    return res.json({
+      _id: seller._id,
+      name: seller.name,
+      email: seller.email,
+      shopName: seller.shopName,
+      isSeller: true,
+      isApproved: seller.isApproved,
+      token: generateToken(seller._id),
+    });
+  } catch (error) {
+    return res.status(401).json({ message: error.message || 'Google authentication failed' });
+  }
+};
+
+// @desc    Verify Google identity for seller registration prefill
+// @route   POST /api/sellers/google/identity
+// @access  Public
+const googleIdentitySeller = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    const { email, name, googleId } = await verifyGoogleCredential(credential);
+    return res.json({ email, name, googleId });
+  } catch (error) {
+    return res.status(401).json({ message: error.message || 'Google verification failed' });
+  }
+};
+
 const logoutSeller = (req, res) => {
   // If you are using HTTP-only cookies for JWT later, this clears it:
   res.cookie('jwt', '', {
@@ -125,6 +191,8 @@ const getSellerWallet = async (req, res) => {
 module.exports = {
   registerSeller,
   authSeller,
+  googleLoginSeller,
+  googleIdentitySeller,
   logoutSeller,
   getSellerWallet,
 };

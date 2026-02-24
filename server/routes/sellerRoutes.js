@@ -1,7 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-const { registerSeller, authSeller, logoutSeller, getSellerWallet } = require('../controllers/sellerController');
+const {
+  registerSeller,
+  authSeller,
+  googleLoginSeller,
+  googleIdentitySeller,
+  logoutSeller,
+  getSellerWallet,
+} = require('../controllers/sellerController');
 const { getSellerSettings, updateSellerSettings } = require('../controllers/sellerSettingsController');
 const { uploadSellerDocs } = require('../middleware/uploadMiddleware');
 // 👇 1. Import the new controller and the protect middleware
@@ -10,6 +17,8 @@ const { protectSeller } = require('../middleware/authMiddleware');
 
 router.post('/', uploadSellerDocs, registerSeller);
 router.post('/login', authSeller);
+router.post('/google/login', googleLoginSeller);
+router.post('/google/identity', googleIdentitySeller);
 router.post('/logout', logoutSeller);
 router.get('/wallet', protectSeller, getSellerWallet);
 router.route('/settings').get(protectSeller, getSellerSettings).put(protectSeller, updateSellerSettings);

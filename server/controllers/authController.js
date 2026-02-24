@@ -1,6 +1,8 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { verifyGoogleCredential, normalizeNameFromEmail } = require('../utils/googleAuth');
 
 // 🔒 Helper function to generate JWT Token
 const generateToken = (id) => {
@@ -83,6 +85,42 @@ const loginUser = async (req, res) => {
     }
 };
 
+// @desc    Authenticate/Register user with Google
+// @route   POST /api/users/google
+// @access  Public
+const googleAuthUser = async (req, res) => {
+    try {
+        const { credential } = req.body;
+        const { email, name, googleId } = await verifyGoogleCredential(credential);
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                name: name || normalizeNameFromEmail(email),
+                email,
+                password: crypto.randomBytes(24).toString('hex'),
+                role: 'buyer',
+                googleId,
+            });
+        } else if (!user.googleId) {
+            user.googleId = googleId;
+            if (!user.name) user.name = name || normalizeNameFromEmail(email);
+            await user.save();
+        }
+
+        return res.json({
+            _id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role || 'buyer',
+            token: generateToken(user._id),
+        });
+    } catch (error) {
+        return res.status(401).json({ message: error.message || 'Google authentication failed' });
+    }
+};
+
 
 const logoutUser = (req, res) => {
     // If you were using cookies, you would clear them here:
@@ -129,6 +167,7 @@ module.exports = {
     generateToken,
     registerUser,
     loginUser,
+    googleAuthUser,
     logoutUser,
     updateUserProfile,
 };
