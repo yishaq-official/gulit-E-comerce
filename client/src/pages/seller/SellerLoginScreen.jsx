@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useSellerLoginMutation } from '../../store/slices/sellersApiSlice';
+import { useSellerLoginMutation, useSellerGoogleLoginMutation } from '../../store/slices/sellersApiSlice';
 import { setSellerCredentials } from '../../store/slices/sellerAuthSlice';
 import { toast } from 'react-toastify';
 import { FaLock, FaEnvelope, FaSpinner, FaArrowRight, FaGoogle } from 'react-icons/fa';
@@ -14,7 +14,10 @@ const SellerLoginScreen = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [sellerLogin, { isLoading }] = useSellerLoginMutation();
+  const [sellerGoogleLogin, { isLoading: loadingGoogle }] = useSellerGoogleLoginMutation();
   const { sellerInfo } = useSelector((state) => state.sellerAuth);
+  const googleBtnRef = useRef(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     if (sellerInfo) {
@@ -25,6 +28,56 @@ const SellerLoginScreen = () => {
       }
     }
   }, [navigate, sellerInfo]);
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const initGoogle = () => {
+      if (!window.google?.accounts?.id || !googleBtnRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response) => {
+          try {
+            const res = await sellerGoogleLogin({ credential: response.credential }).unwrap();
+            dispatch(setSellerCredentials({ ...res }));
+            if (res.isApproved) {
+              navigate('/seller/dashboard');
+              toast.success('Welcome back to your workspace!');
+            } else {
+              navigate('/seller/pending');
+            }
+          } catch (err) {
+            toast.error(err?.data?.message || err.error);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 360,
+        text: 'signin_with',
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      initGoogle();
+      return;
+    }
+
+    const existing = document.querySelector('script[data-google-identity="true"]');
+    if (existing) {
+      existing.addEventListener('load', initGoogle);
+      return () => existing.removeEventListener('load', initGoogle);
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleIdentity = 'true';
+    script.onload = initGoogle;
+    document.body.appendChild(script);
+  }, [dispatch, googleClientId, navigate, sellerGoogleLogin]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -41,10 +94,6 @@ const SellerLoginScreen = () => {
     } catch (err) {
       toast.error(err?.data?.message || err.error);
     }
-  };
-
-  const googleLoginHandler = () => {
-    toast.info("Google Sign-In will be connected soon!");
   };
 
   return (
@@ -157,13 +206,20 @@ const SellerLoginScreen = () => {
           </div>
 
           {/* Google Sign In Button */}
-          <button 
-            onClick={googleLoginHandler}
-            type="button"
-            className="mt-6 w-full bg-white hover:bg-gray-100 text-gray-900 font-bold text-lg py-3.5 rounded-xl transition-all flex items-center justify-center gap-3 border border-transparent shadow-sm"
-          >
-            <FaGoogle className="text-red-500 text-xl" /> Sign in with Google
-          </button>
+          <div className="mt-6">
+            {googleClientId ? (
+              <div className="flex justify-center">
+                <div ref={googleBtnRef} className={loadingGoogle ? 'opacity-60 pointer-events-none' : ''} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="w-full bg-white text-gray-400 font-bold text-lg py-3.5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center gap-3"
+              >
+                <FaGoogle className="text-red-500 text-xl" /> Set VITE_GOOGLE_CLIENT_ID to enable Google Sign-in
+              </button>
+            )}
+          </div>
 
           <div className="mt-8 text-center border-t border-gray-700/50 pt-6">
             <p className="text-gray-400 text-sm font-medium">

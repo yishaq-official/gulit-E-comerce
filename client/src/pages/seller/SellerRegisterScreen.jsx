@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useSellerRegisterMutation } from '../../store/slices/sellersApiSlice';
-import { FaStore, FaUserTie, FaFileAlt, FaUpload, FaSpinner } from 'react-icons/fa';
+import { useSellerGoogleIdentityMutation } from '../../store/slices/sellersApiSlice';
+import { FaStore, FaUserTie, FaFileAlt, FaUpload, FaSpinner, FaGoogle } from 'react-icons/fa';
 
 const SellerRegisterScreen = () => {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ const SellerRegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [googleCredential, setGoogleCredential] = useState('');
+  const [googleLinked, setGoogleLinked] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [nationalIdNumber, setNationalIdNumber] = useState('');
 
@@ -30,11 +33,67 @@ const SellerRegisterScreen = () => {
   const [taxReceiptImage, setTaxReceiptImage] = useState(null);
 
   const [registerSeller, { isLoading }] = useSellerRegisterMutation();
+  const [sellerGoogleIdentity, { isLoading: loadingGoogleIdentity }] = useSellerGoogleIdentityMutation();
+  const googleBtnRef = useRef(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    if (!googleClientId) return;
+
+    const initGoogle = () => {
+      if (!window.google?.accounts?.id || !googleBtnRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: async (response) => {
+          try {
+            const res = await sellerGoogleIdentity({ credential: response.credential }).unwrap();
+            setName((prev) => prev || res.name);
+            setEmail((prev) => prev || res.email);
+            setGoogleCredential(response.credential);
+            setGoogleLinked(true);
+            if (!password && !confirmPassword) {
+              const autoPass = `Gulit_${Math.random().toString(36).slice(2, 10)}!`;
+              setPassword(autoPass);
+              setConfirmPassword(autoPass);
+            }
+            toast.success('Google account linked. Continue with business and KYC details.');
+          } catch (err) {
+            toast.error(err?.data?.message || err.error);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 360,
+        text: 'signup_with',
+      });
+    };
+
+    if (window.google?.accounts?.id) {
+      initGoogle();
+      return;
+    }
+
+    const existing = document.querySelector('script[data-google-identity="true"]');
+    if (existing) {
+      existing.addEventListener('load', initGoogle);
+      return () => existing.removeEventListener('load', initGoogle);
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.dataset.googleIdentity = 'true';
+    script.onload = initGoogle;
+    document.body.appendChild(script);
+  }, [confirmPassword, googleClientId, password, sellerGoogleIdentity]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
+    if (!googleLinked && password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
@@ -58,6 +117,9 @@ const SellerRegisterScreen = () => {
     formData.append('city', city);
     formData.append('postalCode', postalCode);
     formData.append('country', country);
+    if (googleCredential) {
+      formData.append('googleCredential', googleCredential);
+    }
     
     // Append Files (The names must match the multer fields in the backend!)
     formData.append('idCardImage', idCardImage);
@@ -87,6 +149,21 @@ const SellerRegisterScreen = () => {
         </div>
 
         <form onSubmit={submitHandler} className="space-y-8">
+          <div className="bg-[#1e293b] p-6 rounded-3xl border border-gray-800 shadow-xl">
+            <h3 className="text-lg font-bold text-white mb-3">Quick Start with Google</h3>
+            {googleClientId ? (
+              <div className="flex justify-center md:justify-start">
+                <div ref={googleBtnRef} className={loadingGoogleIdentity ? 'opacity-60 pointer-events-none' : ''} />
+              </div>
+            ) : (
+              <button type="button" className="w-full md:w-auto bg-white text-gray-500 border border-gray-300 px-4 py-3 rounded-xl font-bold inline-flex items-center gap-2">
+                <FaGoogle className="text-red-500" /> Set VITE_GOOGLE_CLIENT_ID to enable Google registration
+              </button>
+            )}
+            {googleLinked && (
+              <p className="text-green-400 text-sm font-bold mt-3">Google account linked for this registration.</p>
+            )}
+          </div>
           
           {/* =======================================
               SECTION 1: Personal Information
