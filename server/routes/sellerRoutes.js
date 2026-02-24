@@ -6,6 +6,8 @@ const {
   authSeller,
   googleLoginSeller,
   googleIdentitySeller,
+  forgotSellerPassword,
+  resetSellerPassword,
   logoutSeller,
   getSellerWallet,
 } = require('../controllers/sellerController');
@@ -19,6 +21,8 @@ router.post('/', uploadSellerDocs, registerSeller);
 router.post('/login', authSeller);
 router.post('/google/login', googleLoginSeller);
 router.post('/google/identity', googleIdentitySeller);
+router.post('/forgot-password', forgotSellerPassword);
+router.post('/reset-password/:token', resetSellerPassword);
 router.post('/logout', logoutSeller);
 router.get('/wallet', protectSeller, getSellerWallet);
 router.route('/settings').get(protectSeller, getSellerSettings).put(protectSeller, updateSellerSettings);

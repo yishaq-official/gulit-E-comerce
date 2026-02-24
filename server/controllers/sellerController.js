@@ -3,6 +3,7 @@ const { generateToken } = require('./authController');
 const SellerWalletTransaction = require('../models/sellerWalletTransactionModel');
 const crypto = require('crypto');
 const { verifyGoogleCredential } = require('../utils/googleAuth');
+const { sendEmail } = require('../utils/emailService');
 
 // @desc    Register a new seller (with KYC documents)
 // @route   POST /api/sellers
@@ -164,6 +165,95 @@ const logoutSeller = (req, res) => {
   res.status(200).json({ message: 'Seller logged out successfully' });
 };
 
+// @desc    Seller forgot password
+// @route   POST /api/sellers/forgot-password
+// @access  Public
+const forgotSellerPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+
+  const seller = await Seller.findOne({ email });
+  if (!seller) {
+    return res.json({ message: 'If the account exists, reset instructions have been sent.' });
+  }
+
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  seller.resetPasswordToken = hashedToken;
+  seller.resetPasswordExpires = new Date(Date.now() + 1000 * 60 * 30);
+  await seller.save();
+
+  const baseResetUrl = process.env.SELLER_RESET_URL || 'http://localhost:5173/seller/reset-password';
+  const resetUrl = `${baseResetUrl}/${rawToken}`;
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
+      <h2>Seller Password Reset</h2>
+      <p>You requested a password reset for your Gulit seller account.</p>
+      <p>
+        <a href="${resetUrl}" style="display:inline-block;padding:10px 16px;background:#16a34a;color:#fff;text-decoration:none;border-radius:8px;font-weight:700">
+          Reset Password
+        </a>
+      </p>
+      <p>Or open this link:</p>
+      <p><a href="${resetUrl}">${resetUrl}</a></p>
+      <p>This link expires in 30 minutes.</p>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      to: seller.email,
+      subject: 'Gulit Seller Password Reset',
+      html,
+    });
+  } catch (error) {
+    seller.resetPasswordToken = '';
+    seller.resetPasswordExpires = undefined;
+    await seller.save();
+    return res.status(500).json({ message: `Failed to send reset email: ${error.message}` });
+  }
+
+  return res.json({
+    message: 'If the account exists, reset instructions have been sent.',
+  });
+};
+
+// @desc    Seller reset password
+// @route   POST /api/sellers/reset-password/:token
+// @access  Public
+const resetSellerPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  if (!token || !password) {
+    return res.status(400).json({ message: 'Token and new password are required' });
+  }
+  if (String(password).length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const seller = await Seller.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: new Date() },
+  });
+
+  if (!seller) {
+    return res.status(400).json({ message: 'Invalid or expired reset token' });
+  }
+
+  seller.password = password;
+  seller.resetPasswordToken = '';
+  seller.resetPasswordExpires = undefined;
+  await seller.save();
+
+  return res.json({ message: 'Password reset successful' });
+};
+
 // @desc    Get seller wallet summary + recent transactions
 // @route   GET /api/sellers/wallet
 // @access  Private/Seller
@@ -193,6 +283,8 @@ module.exports = {
   authSeller,
   googleLoginSeller,
   googleIdentitySeller,
+  forgotSellerPassword,
+  resetSellerPassword,
   logoutSeller,
   getSellerWallet,
 };

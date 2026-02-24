@@ -25,6 +25,20 @@ export const sellersApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    sellerForgotPassword: builder.mutation({
+      query: (data) => ({
+        url: '/api/sellers/forgot-password',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    sellerResetPassword: builder.mutation({
+      query: ({ token, password }) => ({
+        url: `/api/sellers/reset-password/${token}`,
+        method: 'POST',
+        body: { password },
+      }),
+    }),
 
     // 2. Seller Registration (KYC Uploads)
     // Note: Because we are sending files, the 'data' here will be a native FormData object,
@@ -74,6 +88,8 @@ export const {
   useSellerLoginMutation, 
   useSellerGoogleLoginMutation,
   useSellerGoogleIdentityMutation,
+  useSellerForgotPasswordMutation,
+  useSellerResetPasswordMutation,
   useSellerRegisterMutation, 
   useSellerLogoutApiMutation,
   useGetSellerWalletQuery,

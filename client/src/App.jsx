@@ -16,6 +16,8 @@ import SellerDashboardLayout from './components/seller/SellerDashboardLayout';
 import HomeScreen from './pages/HomeScreen';
 import LoginScreen from './pages/LoginScreen';
 import RegisterScreen from './pages/RegisterScreen';
+import ForgotPasswordScreen from './pages/ForgotPasswordScreen';
+import ResetPasswordScreen from './pages/ResetPasswordScreen';
 import ProductDetailScreen from './pages/ProductDetailScreen';
 import ProfileScreen from './pages/ProfileScreen';
 import ShippingScreen from './pages/ShippingScreen';
@@ -29,6 +31,8 @@ import CategoryScreen from './pages/CategoryScreen';
 import SellerLandingScreen from './pages/seller/SellerLandingScreen'; 
 import SellerRegisterScreen from './pages/seller/SellerRegisterScreen';
 import SellerLoginScreen from './pages/seller/SellerLoginScreen';
+import SellerForgotPasswordScreen from './pages/seller/SellerForgotPasswordScreen';
+import SellerResetPasswordScreen from './pages/seller/SellerResetPasswordScreen';
 import SellerPendingScreen from './pages/seller/SellerPendingScreen';
 import SellerDashboardScreen from './pages/seller/SellerDashboardScreen';
 import SellerProductListScreen from './pages/seller/SellerProductListScreen';
@@ -61,6 +65,8 @@ const App = () => {
           <Route path="/search/:keyword" element={<HomeScreen />} />
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/register" element={<RegisterScreen />} />
+          <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
           <Route path="/product/:id" element={<ProductDetailScreen />} />
 
           {/* 🔒 Protected Buyer Routes */}
@@ -84,6 +90,8 @@ const App = () => {
           <Route path="/sell" element={<SellerLandingScreen />} />
           <Route path="/seller/register" element={<SellerRegisterScreen />} />
           <Route path="/seller/login" element={<SellerLoginScreen />} />
+          <Route path="/seller/forgot-password" element={<SellerForgotPasswordScreen />} />
+          <Route path="/seller/reset-password/:token" element={<SellerResetPasswordScreen />} />
           <Route path="/seller/pending" element={<SellerPendingScreen />} />
           <Route path="/seller/help-center" element={<SellerHelpCenterScreen />} />
           <Route path="/seller/rules-center" element={<SellerRulesCenterScreen />} />

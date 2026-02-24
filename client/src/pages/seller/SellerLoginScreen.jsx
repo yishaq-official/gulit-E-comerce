@@ -176,7 +176,7 @@ const SellerLoginScreen = () => {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-bold text-gray-400">Password</label>
-                <Link to="#" className="text-xs font-bold text-green-500 hover:text-green-400 transition-colors">Forgot password?</Link>
+                <Link to="/seller/forgot-password" className="text-xs font-bold text-green-500 hover:text-green-400 transition-colors">Forgot password?</Link>
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">

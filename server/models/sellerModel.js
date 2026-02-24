@@ -46,6 +46,8 @@ const sellerSchema = new mongoose.Schema(
     // 5. Admin Control Flags
     isApproved: { type: Boolean, required: true, default: false }, 
     isActive: { type: Boolean, required: true, default: true }, 
+    resetPasswordToken: { type: String, default: '' },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );
