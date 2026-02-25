@@ -18,58 +18,96 @@ import {
   FaUsers,
 } from 'react-icons/fa';
 import { adminLogout } from '../slices/adminAuthSlice';
+import { useAdminStatsQuery } from '../slices/adminApiSlice';
 import logo from '../../assets/gulit.png';
 
 const AdminDashboardScreen = () => {
   const { adminInfo } = useSelector((state) => state.adminAuth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { data: stats, isLoading, isError, refetch, isFetching } = useAdminStatsQuery();
 
   const logoutHandler = () => {
     dispatch(adminLogout());
     navigate('/admin/login');
   };
 
+  const formatInt = (value) => new Intl.NumberFormat('en-US').format(Number(value || 0));
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'ETB',
+      maximumFractionDigits: 2,
+    }).format(Number(value || 0));
+
+  const activityRate = stats?.registeredUsers
+    ? ((Number(stats.activeUsers || 0) / Number(stats.registeredUsers || 1)) * 100).toFixed(1)
+    : '0.0';
+
   const cards = [
     {
       label: 'Registered Users',
-      value: '1,284',
-      delta: '+6.2%',
+      value: formatInt(stats?.registeredUsers),
+      delta: `${activityRate}% active`,
       icon: FaUsers,
       iconColor: 'text-cyan-300',
-      chip: 'vs last week',
+      chip: 'buyer accounts',
+    },
+    {
+      label: 'Active Users (30d)',
+      value: formatInt(stats?.activeUsers),
+      delta: `${formatInt(stats?.paidOrdersCount)} paid orders`,
+      icon: FaUsers,
+      iconColor: 'text-blue-300',
+      chip: 'distinct buyers',
     },
     {
       label: 'Active Sellers',
-      value: '342',
-      delta: '+3.1%',
+      value: formatInt(stats?.activeSellers),
+      delta: `${formatInt(stats?.pendingSellerApprovals)} pending`,
       icon: FaStore,
       iconColor: 'text-emerald-300',
-      chip: 'approval stable',
+      chip: 'approved + active',
     },
     {
       label: 'Risk Alerts',
-      value: '8',
-      delta: '-2',
+      value: formatInt(stats?.riskAlerts),
+      delta: `${formatInt(stats?.overduePaidUndelivered)} overdue deliveries`,
       icon: FaExclamationTriangle,
       iconColor: 'text-amber-300',
-      chip: 'needs review',
+      chip: 'pending + suspended + overdue',
     },
     {
-      label: 'Revenue Pulse',
-      value: 'ETB 2.4M',
-      delta: '+12.8%',
+      label: 'Platform Income',
+      value: formatCurrency(stats?.platformIncome),
+      delta: 'all paid transactions',
       icon: FaChartLine,
       iconColor: 'text-fuchsia-300',
-      chip: 'monthly trend',
+      chip: 'commission earnings',
+    },
+    {
+      label: 'Total Market Income',
+      value: formatCurrency(stats?.totalMarketIncome),
+      delta: `${formatCurrency(stats?.sellerIncome)} seller share`,
+      icon: FaChartLine,
+      iconColor: 'text-violet-300',
+      chip: 'seller + platform (no tax)',
+    },
+    {
+      label: 'Revenue Pulse (30d)',
+      value: formatCurrency(stats?.revenuePulse),
+      delta: `updated ${stats?.lastUpdatedAt ? new Date(stats.lastUpdatedAt).toLocaleString() : '-'}`,
+      icon: FaChartLine,
+      iconColor: 'text-lime-300',
+      chip: 'total paid order value',
     },
   ];
 
   const queues = [
-    { title: 'Seller Approvals', count: 14, color: 'text-cyan-200' },
-    { title: 'Dispute Tickets', count: 5, color: 'text-amber-200' },
-    { title: 'Refund Requests', count: 11, color: 'text-red-200' },
-    { title: 'Policy Violations', count: 3, color: 'text-orange-200' },
+    { title: 'Seller Approvals', count: stats?.pendingSellerApprovals || 0, color: 'text-cyan-200' },
+    { title: 'Suspended Sellers', count: stats?.suspendedSellers || 0, color: 'text-amber-200' },
+    { title: 'Overdue Deliveries', count: stats?.overduePaidUndelivered || 0, color: 'text-red-200' },
+    { title: 'Risk Alerts', count: stats?.riskAlerts || 0, color: 'text-orange-200' },
   ];
 
   const navItems = [
@@ -152,6 +190,25 @@ const AdminDashboardScreen = () => {
               </div>
             </div>
 
+            {isLoading ? (
+              <div className="bg-[#0f172a]/90 border border-white/10 rounded-2xl p-5 text-gray-300">
+                Loading real dashboard metrics...
+              </div>
+            ) : null}
+
+            {isError ? (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5">
+                <p className="text-red-200 font-bold">Failed to load dashboard metrics.</p>
+                <button
+                  type="button"
+                  onClick={refetch}
+                  className="mt-3 px-4 py-2 rounded-lg bg-red-500/20 border border-red-500/30 text-red-100 font-bold"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : null}
+
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {cards.map((card) => (
                 <div key={card.label} className="bg-[#0f172a]/90 border border-white/10 rounded-2xl p-5">
@@ -166,6 +223,7 @@ const AdminDashboardScreen = () => {
                   <p className="text-sm text-gray-400">{card.label}</p>
                   <p className="text-3xl font-black mt-1">{card.value}</p>
                   <p className="text-xs text-gray-500 mt-1">{card.chip}</p>
+                  <p className="text-[11px] text-gray-500 mt-1">{card.delta}</p>
                 </div>
               ))}
             </div>
@@ -176,7 +234,7 @@ const AdminDashboardScreen = () => {
                   <FaShieldAlt className="text-cyan-300" /> Governance Priorities
                 </h2>
                 <p className="text-gray-300 mb-5">
-                  Focus on verification integrity, dispute handling, and operational bottlenecks.
+                  Focus on verification integrity, dispute handling, and operational bottlenecks with real-time platform metrics.
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between bg-[#020617]/80 border border-white/10 rounded-xl px-4 py-3">
@@ -216,6 +274,13 @@ const AdminDashboardScreen = () => {
                 <p className="text-xs text-gray-500 mt-4">
                   Next page can be the Seller Approval module linked from this queue.
                 </p>
+                <button
+                  type="button"
+                  onClick={refetch}
+                  className="mt-3 text-xs px-3 py-2 rounded-lg border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] text-gray-200 font-bold"
+                >
+                  {isFetching ? 'Refreshing...' : 'Refresh Metrics'}
+                </button>
               </div>
             </div>
           </section>
@@ -223,9 +288,46 @@ const AdminDashboardScreen = () => {
       </main>
 
       <footer className="border-t border-white/10 bg-[#081122]">
-        <div className="w-full px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between text-xs text-gray-400">
-          <p>© {new Date().getFullYear()} Gulit Marketplace Admin</p>
-          <p>Security-first operations panel</p>
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <img src={logo} alt="Gulit" className="w-8 h-8 object-contain" />
+                <p className="font-black text-gray-100">Gulit Admin</p>
+              </div>
+              <p className="text-sm text-gray-400 leading-6">
+                Central operations for trust, compliance, moderation, and marketplace growth.
+              </p>
+            </div>
+            <div>
+              <p className="font-bold text-gray-200 mb-3">Operations</p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>Seller verification workflow</li>
+                <li>Buyer and seller account controls</li>
+                <li>Risk and fraud signal monitoring</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-bold text-gray-200 mb-3">Financial Summary</p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>Platform income: {formatCurrency(stats?.platformIncome)}</li>
+                <li>Seller income: {formatCurrency(stats?.sellerIncome)}</li>
+                <li>Market income: {formatCurrency(stats?.totalMarketIncome)}</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-bold text-gray-200 mb-3">System Status</p>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li>Auth: Active</li>
+                <li>Metrics sync: {isFetching ? 'Updating' : 'Live'}</li>
+                <li>Last update: {stats?.lastUpdatedAt ? new Date(stats.lastUpdatedAt).toLocaleString() : 'N/A'}</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-gray-500">
+            <p>© {new Date().getFullYear()} Gulit Marketplace. All rights reserved.</p>
+            <p>Security-first operations panel</p>
+          </div>
         </div>
       </footer>
     </div>
