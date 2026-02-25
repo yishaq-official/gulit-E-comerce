@@ -329,8 +329,199 @@ const getSellerDetailsForAdmin = async (req, res) => {
   });
 };
 
+// @desc    Get seller transactions for admin
+// @route   GET /api/admin/sellers/:id/transactions
+// @access  Private/Admin
+const getSellerTransactionsForAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid seller id' });
+  }
+
+  const sellerId = new mongoose.Types.ObjectId(id);
+  const normalizedPage = Math.max(Number(page) || 1, 1);
+  const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const skip = (normalizedPage - 1) * normalizedLimit;
+
+  const [transactions, total] = await Promise.all([
+    SellerWalletTransaction.find({ seller: sellerId })
+      .populate('order', '_id totalPrice isPaid isDelivered paidAt createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(normalizedLimit),
+    SellerWalletTransaction.countDocuments({ seller: sellerId }),
+  ]);
+
+  const pages = Math.max(Math.ceil(total / normalizedLimit), 1);
+
+  return res.json({
+    transactions,
+    page: normalizedPage,
+    pages,
+    total,
+    limit: normalizedLimit,
+    hasPrevPage: normalizedPage > 1,
+    hasNextPage: normalizedPage < pages,
+  });
+};
+
+// @desc    Get seller products for admin
+// @route   GET /api/admin/sellers/:id/products
+// @access  Private/Admin
+const getSellerProductsForAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { page = 1, limit = 10, keyword = '', stock = 'all' } = req.query;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid seller id' });
+  }
+
+  const sellerId = new mongoose.Types.ObjectId(id);
+  const normalizedPage = Math.max(Number(page) || 1, 1);
+  const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const skip = (normalizedPage - 1) * normalizedLimit;
+
+  const filter = { seller: sellerId };
+  const trimmedKeyword = String(keyword || '').trim();
+  if (trimmedKeyword) {
+    const regex = new RegExp(trimmedKeyword, 'i');
+    filter.$or = [{ name: regex }, { category: regex }, { brand: regex }];
+  }
+
+  if (stock === 'out') {
+    filter.countInStock = { $lte: 0 };
+  } else if (stock === 'low') {
+    filter.countInStock = { $gt: 0, $lte: 5 };
+  } else if (stock === 'in') {
+    filter.countInStock = { $gt: 0 };
+  }
+
+  const [products, total] = await Promise.all([
+    Product.find(filter)
+      .select('name category brand price countInStock image rating numReviews createdAt')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(normalizedLimit),
+    Product.countDocuments(filter),
+  ]);
+
+  const pages = Math.max(Math.ceil(total / normalizedLimit), 1);
+
+  return res.json({
+    products,
+    page: normalizedPage,
+    pages,
+    total,
+    limit: normalizedLimit,
+    hasPrevPage: normalizedPage > 1,
+    hasNextPage: normalizedPage < pages,
+  });
+};
+
+// @desc    Get seller orders for admin
+// @route   GET /api/admin/sellers/:id/orders
+// @access  Private/Admin
+const getSellerOrdersForAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { page = 1, limit = 10, keyword = '', status = 'all' } = req.query;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid seller id' });
+  }
+
+  const sellerId = new mongoose.Types.ObjectId(id);
+  const normalizedPage = Math.max(Number(page) || 1, 1);
+  const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const skip = (normalizedPage - 1) * normalizedLimit;
+  const trimmedKeyword = String(keyword || '').trim();
+
+  const pipeline = [
+    { $unwind: '$orderItems' },
+    { $match: { 'orderItems.seller': sellerId } },
+    {
+      $group: {
+        _id: '$_id',
+        user: { $first: '$user' },
+        isPaid: { $first: '$isPaid' },
+        isDelivered: { $first: '$isDelivered' },
+        paidAt: { $first: '$paidAt' },
+        deliveredAt: { $first: '$deliveredAt' },
+        createdAt: { $first: '$createdAt' },
+        totalPrice: { $first: '$totalPrice' },
+        sellerRevenue: { $sum: { $ifNull: ['$orderItems.sellerRevenue', 0] } },
+        sellerItems: { $sum: { $ifNull: ['$orderItems.qty', 0] } },
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'buyer',
+      },
+    },
+    {
+      $unwind: {
+        path: '$buyer',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $addFields: {
+        buyerName: '$buyer.name',
+        buyerEmail: '$buyer.email',
+        orderIdStr: { $toString: '$_id' },
+      },
+    },
+  ];
+
+  if (status === 'paid') {
+    pipeline.push({ $match: { isPaid: true } });
+  } else if (status === 'unpaid') {
+    pipeline.push({ $match: { isPaid: false } });
+  } else if (status === 'pendingDelivery') {
+    pipeline.push({ $match: { isPaid: true, isDelivered: false } });
+  } else if (status === 'delivered') {
+    pipeline.push({ $match: { isDelivered: true } });
+  }
+
+  if (trimmedKeyword) {
+    const regex = new RegExp(trimmedKeyword, 'i');
+    pipeline.push({
+      $match: {
+        $or: [{ orderIdStr: regex }, { buyerName: regex }, { buyerEmail: regex }],
+      },
+    });
+  }
+
+  pipeline.push({ $sort: { createdAt: -1 } });
+  pipeline.push({
+    $facet: {
+      orders: [{ $skip: skip }, { $limit: normalizedLimit }],
+      metadata: [{ $count: 'total' }],
+    },
+  });
+
+  const [result] = await Order.aggregate(pipeline);
+  const orders = result?.orders || [];
+  const total = result?.metadata?.[0]?.total || 0;
+  const pages = Math.max(Math.ceil(total / normalizedLimit), 1);
+
+  return res.json({
+    orders,
+    page: normalizedPage,
+    pages,
+    total,
+    limit: normalizedLimit,
+    hasPrevPage: normalizedPage > 1,
+    hasNextPage: normalizedPage < pages,
+  });
+};
+
 module.exports = {
   getSellersForAdmin,
   getSellerDetailsForAdmin,
+  getSellerTransactionsForAdmin,
+  getSellerProductsForAdmin,
+  getSellerOrdersForAdmin,
   updateSellerStatusByAdmin,
 };

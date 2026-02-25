@@ -79,6 +79,31 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 5,
       providesTags: ['AdminSeller'],
     }),
+    adminGetSellerTransactions: builder.query({
+      query: ({ sellerId, page = 1, limit = 10 } = {}) => ({
+        url: `/api/admin/sellers/${sellerId}/transactions?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSeller'],
+    }),
+    adminGetSellerProducts: builder.query({
+      query: ({ sellerId, page = 1, limit = 8, keyword = '', stock = 'all' } = {}) => ({
+        url: `/api/admin/sellers/${sellerId}/products?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(
+          limit
+        )}&keyword=${encodeURIComponent(keyword)}&stock=${encodeURIComponent(stock)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSeller'],
+    }),
+    adminGetSellerOrders: builder.query({
+      query: ({ sellerId, page = 1, limit = 10, keyword = '', status = 'all' } = {}) => ({
+        url: `/api/admin/sellers/${sellerId}/orders?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(
+          limit
+        )}&keyword=${encodeURIComponent(keyword)}&status=${encodeURIComponent(status)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSeller'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -93,4 +118,7 @@ export const {
   useAdminGetSellersQuery,
   useAdminUpdateSellerStatusMutation,
   useAdminGetSellerDetailsQuery,
+  useAdminGetSellerTransactionsQuery,
+  useAdminGetSellerProductsQuery,
+  useAdminGetSellerOrdersQuery,
 } = adminApiSlice;

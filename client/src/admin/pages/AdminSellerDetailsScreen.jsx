@@ -3,21 +3,29 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   FaArrowLeft,
   FaCheckCircle,
+  FaChevronLeft,
+  FaChevronRight,
   FaClock,
   FaMoneyBillWave,
   FaPowerOff,
+  FaSearch,
   FaShieldAlt,
   FaSignOutAlt,
-  FaStore,
   FaSync,
   FaWallet,
 } from 'react-icons/fa';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
 import AdminSidebar from '../components/AdminSidebar';
 import { adminLogout } from '../slices/adminAuthSlice';
-import { useAdminGetSellerDetailsQuery, useAdminUpdateSellerStatusMutation } from '../slices/adminApiSlice';
+import {
+  useAdminGetSellerDetailsQuery,
+  useAdminGetSellerOrdersQuery,
+  useAdminGetSellerProductsQuery,
+  useAdminGetSellerTransactionsQuery,
+  useAdminUpdateSellerStatusMutation,
+} from '../slices/adminApiSlice';
 import { BASE_URL } from '../../store/slices/apiSlice';
 
 const tabs = [
@@ -45,17 +53,37 @@ const AdminSellerDetailsScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { adminInfo } = useSelector((state) => state.adminAuth);
   const [activeTab, setActiveTab] = useState('overview');
+  const [transactionsPage, setTransactionsPage] = useState(1);
+  const [productsPage, setProductsPage] = useState(1);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [productKeywordInput, setProductKeywordInput] = useState('');
+  const [productKeyword, setProductKeyword] = useState('');
+  const [productStock, setProductStock] = useState('all');
+  const [ordersKeywordInput, setOrdersKeywordInput] = useState('');
+  const [ordersKeyword, setOrdersKeyword] = useState('');
+  const [ordersStatus, setOrdersStatus] = useState('all');
 
   const { data, isLoading, isError, refetch, isFetching } = useAdminGetSellerDetailsQuery(id);
   const [updateSellerStatus, { isLoading: updating }] = useAdminUpdateSellerStatusMutation();
+  const { data: txData, isLoading: loadingTransactions } = useAdminGetSellerTransactionsQuery(
+    { sellerId: id, page: transactionsPage, limit: 10 },
+    { skip: activeTab !== 'transactions' }
+  );
+  const { data: productData, isLoading: loadingProducts } = useAdminGetSellerProductsQuery(
+    { sellerId: id, page: productsPage, limit: 8, keyword: productKeyword, stock: productStock },
+    { skip: activeTab !== 'products' }
+  );
+  const { data: orderData, isLoading: loadingOrders } = useAdminGetSellerOrdersQuery(
+    { sellerId: id, page: ordersPage, limit: 10, keyword: ordersKeyword, status: ordersStatus },
+    { skip: activeTab !== 'orders' }
+  );
 
   const seller = data?.seller;
   const summary = data?.summary || {};
-  const products = data?.recentProducts || [];
-  const orders = data?.recentOrders || [];
-  const transactions = data?.recentTransactions || [];
+  const products = productData?.products || [];
+  const orders = orderData?.orders || [];
+  const transactions = txData?.transactions || [];
 
   const logoutHandler = () => {
     dispatch(adminLogout());
@@ -203,7 +231,12 @@ const AdminSellerDetailsScreen = () => {
                     <button
                       key={tab.key}
                       type="button"
-                      onClick={() => setActiveTab(tab.key)}
+                      onClick={() => {
+                        setActiveTab(tab.key);
+                        if (tab.key === 'transactions') setTransactionsPage(1);
+                        if (tab.key === 'products') setProductsPage(1);
+                        if (tab.key === 'orders') setOrdersPage(1);
+                      }}
                       className={`px-4 py-2 rounded-xl text-sm font-bold border ${
                         activeTab === tab.key
                           ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200'
@@ -261,6 +294,7 @@ const AdminSellerDetailsScreen = () => {
                     <div className="px-4 py-3 border-b border-white/10 font-black flex items-center gap-2">
                       <FaWallet /> Recent Transactions
                     </div>
+                    {loadingTransactions ? <div className="px-4 py-4 text-gray-400 text-sm">Loading transactions...</div> : null}
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[760px]">
                         <thead className="bg-[#0a1224]">
@@ -289,31 +323,151 @@ const AdminSellerDetailsScreen = () => {
                         </tbody>
                       </table>
                     </div>
+                    <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
+                      <p className="text-xs text-gray-500">Page {txData?.page || 1} of {txData?.pages || 1}</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={!txData?.hasPrevPage}
+                          onClick={() => setTransactionsPage((prev) => Math.max(prev - 1, 1))}
+                          className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                        >
+                          <FaChevronLeft />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!txData?.hasNextPage}
+                          onClick={() => setTransactionsPage((prev) => prev + 1)}
+                          className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                        >
+                          <FaChevronRight />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'products' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                    {products.length === 0 ? (
-                      <div className="col-span-full bg-[#0f172a] border border-white/10 rounded-2xl p-6 text-gray-400">No products found.</div>
-                    ) : (
-                      products.map((product) => (
-                        <div key={product._id} className="bg-[#0f172a] border border-white/10 rounded-2xl p-4">
-                          <p className="font-black line-clamp-2">{product.name}</p>
-                          <p className="text-xs text-gray-500 mt-1">{product.category}</p>
-                          <p className="text-sm text-emerald-200 font-bold mt-2">{currency(product.price)}</p>
-                          <p className="text-xs text-gray-400 mt-2">Stock: {product.countInStock}</p>
-                        </div>
-                      ))
-                    )}
+                  <div className="space-y-4">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setProductsPage(1);
+                        setProductKeyword(productKeywordInput.trim());
+                      }}
+                      className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row gap-3"
+                    >
+                      <div className="relative flex-1">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input
+                          type="text"
+                          value={productKeywordInput}
+                          onChange={(e) => setProductKeywordInput(e.target.value)}
+                          placeholder="Search product name/category/brand..."
+                          className="w-full pl-10 pr-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <select
+                        value={productStock}
+                        onChange={(e) => {
+                          setProductsPage(1);
+                          setProductStock(e.target.value);
+                        }}
+                        className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      >
+                        <option value="all" className="bg-[#0b1220]">All Stock</option>
+                        <option value="in" className="bg-[#0b1220]">In Stock</option>
+                        <option value="low" className="bg-[#0b1220]">Low Stock</option>
+                        <option value="out" className="bg-[#0b1220]">Out of Stock</option>
+                      </select>
+                      <button type="submit" className="px-4 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black">
+                        Apply
+                      </button>
+                    </form>
+
+                    {loadingProducts ? <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 text-sm text-gray-400">Loading products...</div> : null}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                      {products.length === 0 ? (
+                        <div className="col-span-full bg-[#0f172a] border border-white/10 rounded-2xl p-6 text-gray-400">No products found.</div>
+                      ) : (
+                        products.map((product) => (
+                          <div key={product._id} className="bg-[#0f172a] border border-white/10 rounded-2xl p-4">
+                            <p className="font-black line-clamp-2">{product.name}</p>
+                            <p className="text-xs text-gray-500 mt-1">{product.category}</p>
+                            <p className="text-sm text-emerald-200 font-bold mt-2">{currency(product.price)}</p>
+                            <p className="text-xs text-gray-400 mt-2">Stock: {product.countInStock}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between bg-[#0f172a] border border-white/10 rounded-xl px-4 py-3">
+                      <p className="text-xs text-gray-500">Page {productData?.page || 1} of {productData?.pages || 1}</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={!productData?.hasPrevPage}
+                          onClick={() => setProductsPage((prev) => Math.max(prev - 1, 1))}
+                          className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                        >
+                          <FaChevronLeft />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!productData?.hasNextPage}
+                          onClick={() => setProductsPage((prev) => prev + 1)}
+                          className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                        >
+                          <FaChevronRight />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 {activeTab === 'orders' && (
-                  <div className="bg-[#0f172a] border border-white/10 rounded-2xl overflow-hidden">
+                  <div className="space-y-4">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setOrdersPage(1);
+                        setOrdersKeyword(ordersKeywordInput.trim());
+                      }}
+                      className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row gap-3"
+                    >
+                      <div className="relative flex-1">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                        <input
+                          type="text"
+                          value={ordersKeywordInput}
+                          onChange={(e) => setOrdersKeywordInput(e.target.value)}
+                          placeholder="Search by order id or buyer..."
+                          className="w-full pl-10 pr-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                        />
+                      </div>
+                      <select
+                        value={ordersStatus}
+                        onChange={(e) => {
+                          setOrdersPage(1);
+                          setOrdersStatus(e.target.value);
+                        }}
+                        className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      >
+                        <option value="all" className="bg-[#0b1220]">All Orders</option>
+                        <option value="paid" className="bg-[#0b1220]">Paid</option>
+                        <option value="unpaid" className="bg-[#0b1220]">Unpaid</option>
+                        <option value="pendingDelivery" className="bg-[#0b1220]">Pending Delivery</option>
+                        <option value="delivered" className="bg-[#0b1220]">Delivered</option>
+                      </select>
+                      <button type="submit" className="px-4 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black">
+                        Apply
+                      </button>
+                    </form>
+
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-white/10 font-black flex items-center gap-2">
                       <FaMoneyBillWave /> Recent Orders
                     </div>
+                    {loadingOrders ? <div className="px-4 py-4 text-gray-400 text-sm">Loading orders...</div> : null}
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[860px]">
                         <thead className="bg-[#0a1224]">
@@ -333,7 +487,7 @@ const AdminSellerDetailsScreen = () => {
                             orders.map((order) => (
                               <tr key={order._id} className="border-t border-white/5">
                                 <td className="px-4 py-3 text-sm text-gray-300">{order._id}</td>
-                                <td className="px-4 py-3 text-sm text-gray-300">{order.user?.name || '-'}<p className="text-xs text-gray-500">{order.user?.email || '-'}</p></td>
+                                <td className="px-4 py-3 text-sm text-gray-300">{order.buyerName || '-'}<p className="text-xs text-gray-500">{order.buyerEmail || '-'}</p></td>
                                 <td className="px-4 py-3 text-sm text-gray-300">{order.sellerItems || 0}</td>
                                 <td className="px-4 py-3 text-sm font-bold text-emerald-200">{currency(order.sellerRevenue)}</td>
                                 <td className="px-4 py-3 text-sm">{order.isPaid ? <span className="text-emerald-200 inline-flex items-center gap-1"><FaCheckCircle /> Paid</span> : <span className="text-amber-200 inline-flex items-center gap-1"><FaClock /> Unpaid</span>}</td>
@@ -343,6 +497,28 @@ const AdminSellerDetailsScreen = () => {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                    <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
+                      <p className="text-xs text-gray-500">Page {orderData?.page || 1} of {orderData?.pages || 1}</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={!orderData?.hasPrevPage}
+                          onClick={() => setOrdersPage((prev) => Math.max(prev - 1, 1))}
+                          className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                        >
+                          <FaChevronLeft />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!orderData?.hasNextPage}
+                          onClick={() => setOrdersPage((prev) => prev + 1)}
+                          className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                        >
+                          <FaChevronRight />
+                        </button>
+                      </div>
+                    </div>
                     </div>
                   </div>
                 )}
