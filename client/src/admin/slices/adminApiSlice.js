@@ -72,6 +72,24 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['AdminSeller', 'Order'],
     }),
+    adminExportSellersCsv: builder.mutation({
+      query: ({
+        status = 'all',
+        keyword = '',
+        category = 'all',
+        country = 'all',
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+      } = {}) => ({
+        url: `/api/admin/sellers/export?status=${encodeURIComponent(status)}&keyword=${encodeURIComponent(
+          keyword
+        )}&category=${encodeURIComponent(category)}&country=${encodeURIComponent(country)}&sortBy=${encodeURIComponent(
+          sortBy
+        )}&sortOrder=${encodeURIComponent(sortOrder)}`,
+        method: 'GET',
+        responseHandler: async (response) => response.text(),
+      }),
+    }),
     adminGetSellerDetails: builder.query({
       query: (sellerId) => ({
         url: `/api/admin/sellers/${sellerId}`,
@@ -221,6 +239,7 @@ export const {
   useAdminStatsQuery,
   useAdminGetSellersQuery,
   useAdminUpdateSellerStatusMutation,
+  useAdminExportSellersCsvMutation,
   useAdminGetSellerDetailsQuery,
   useAdminGetSellerTransactionsQuery,
   useAdminGetSellerProductsQuery,

@@ -4,16 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import {
   FaChevronLeft,
   FaChevronRight,
+  FaFileDownload,
   FaSearch,
   FaSignOutAlt,
   FaStore,
   FaSync,
   FaTachometerAlt,
 } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
 import AdminSidebar from '../components/AdminSidebar';
 import { adminLogout } from '../slices/adminAuthSlice';
-import { useAdminGetSellersQuery } from '../slices/adminApiSlice';
+import { useAdminExportSellersCsvMutation, useAdminGetSellersQuery } from '../slices/adminApiSlice';
 
 const sortOptions = [
   { value: 'createdAt_desc', label: 'Newest' },
@@ -59,6 +61,7 @@ const AdminUserManagementScreen = () => {
   const sellers = data?.sellers || [];
   const pages = data?.pages || 1;
   const total = data?.total || 0;
+  const [exportSellersCsv, { isLoading: exportingCsv }] = useAdminExportSellersCsvMutation();
 
   const perf = useMemo(() => {
     const summary = {
@@ -86,6 +89,33 @@ const AdminUserManagementScreen = () => {
     e.preventDefault();
     setPage(1);
     setKeyword(searchInput.trim());
+  };
+
+  const handleExport = async () => {
+    try {
+      const csvText = await exportSellersCsv({
+        status,
+        keyword,
+        category: 'all',
+        country: 'all',
+        sortBy,
+        sortOrder,
+      }).unwrap();
+
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.setAttribute('download', `sellers-performance-${stamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Seller export downloaded');
+    } catch (err) {
+      toast.error(err?.data?.message || err.error || 'Failed to export sellers');
+    }
   };
 
   return (
@@ -183,6 +213,14 @@ const AdminUserManagementScreen = () => {
                   className="px-5 py-3 rounded-xl border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] text-gray-200 font-bold inline-flex items-center gap-2"
                 >
                   <FaSync className={isFetching ? 'animate-spin' : ''} /> Refresh
+                </button>
+                <button
+                  type="button"
+                  disabled={exportingCsv}
+                  onClick={handleExport}
+                  className="px-5 py-3 rounded-xl border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 font-bold inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  <FaFileDownload /> {exportingCsv ? 'Exporting...' : 'Export CSV'}
                 </button>
                 <div className="px-4 py-3 rounded-xl border border-white/10 bg-[#020617]/80 text-sm text-gray-300 inline-flex items-center gap-2">
                   <FaTachometerAlt /> {total} sellers found

@@ -46,28 +46,10 @@ const buildActivityFilter = ({ sellerId, action, severity, dateFrom, dateTo }) =
   return filter;
 };
 
-// @desc    Get sellers for admin review
-// @route   GET /api/admin/sellers
-// @access  Private/Admin
-const getSellersForAdmin = async (req, res) => {
-  const {
-    status = 'all',
-    keyword = '',
-    category = 'all',
-    country = 'all',
-    sortBy = 'createdAt',
-    sortOrder = 'desc',
-    page = 1,
-    limit = 10,
-  } = req.query;
-
-  const normalizedPage = Math.max(Number(page) || 1, 1);
-  const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
-  const skip = (normalizedPage - 1) * normalizedLimit;
-  const overdue7 = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
-
+const buildSellerListFilter = ({ status = 'all', keyword = '', category = 'all', country = 'all' }) => {
   const filter = {};
   const trimmedKeyword = String(keyword || '').trim();
+
   if (trimmedKeyword) {
     const regex = new RegExp(trimmedKeyword, 'i');
     filter.$or = [
@@ -96,6 +78,10 @@ const getSellersForAdmin = async (req, res) => {
     filter['address.country'] = country;
   }
 
+  return filter;
+};
+
+const buildSellerSortStage = ({ sortBy = 'createdAt', sortOrder = 'desc' }) => {
   const sortableFields = {
     createdAt: 'createdAt',
     shopName: 'shopName',
@@ -110,7 +96,30 @@ const getSellersForAdmin = async (req, res) => {
   };
   const sortField = sortableFields[sortBy] || 'createdAt';
   const direction = String(sortOrder).toLowerCase() === 'asc' ? 1 : -1;
-  const sortStage = { [sortField]: direction, _id: 1 };
+  return { [sortField]: direction, _id: 1 };
+};
+
+// @desc    Get sellers for admin review
+// @route   GET /api/admin/sellers
+// @access  Private/Admin
+const getSellersForAdmin = async (req, res) => {
+  const {
+    status = 'all',
+    keyword = '',
+    category = 'all',
+    country = 'all',
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    page = 1,
+    limit = 10,
+  } = req.query;
+
+  const normalizedPage = Math.max(Number(page) || 1, 1);
+  const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const skip = (normalizedPage - 1) * normalizedLimit;
+  const overdue7 = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+  const filter = buildSellerListFilter({ status, keyword, category, country });
+  const sortStage = buildSellerSortStage({ sortBy, sortOrder });
 
   const [result] = await Seller.aggregate([
     { $match: filter },
@@ -260,6 +269,219 @@ const getSellersForAdmin = async (req, res) => {
     hasPrevPage: normalizedPage > 1,
     hasNextPage: normalizedPage < pages,
   });
+};
+
+// @desc    Export sellers for admin (CSV)
+// @route   GET /api/admin/sellers/export
+// @access  Private/Admin
+const exportSellersForAdmin = async (req, res) => {
+  const {
+    status = 'all',
+    keyword = '',
+    category = 'all',
+    country = 'all',
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = req.query;
+
+  const overdue7 = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+  const filter = buildSellerListFilter({ status, keyword, category, country });
+  const sortStage = buildSellerSortStage({ sortBy, sortOrder });
+
+  const sellers = await Seller.aggregate([
+    { $match: filter },
+    {
+      $lookup: {
+        from: 'products',
+        let: { sellerId: '$_id' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$seller', '$$sellerId'] } } },
+          { $count: 'totalProducts' },
+        ],
+        as: 'productStats',
+      },
+    },
+    {
+      $lookup: {
+        from: 'orders',
+        let: { sellerId: '$_id' },
+        pipeline: [
+          { $unwind: '$orderItems' },
+          { $match: { $expr: { $eq: ['$orderItems.seller', '$$sellerId'] } } },
+          {
+            $group: {
+              _id: '$_id',
+              isPaid: { $first: '$isPaid' },
+              isDelivered: { $first: '$isDelivered' },
+              paidAt: { $first: '$paidAt' },
+              sellerRevenue: { $sum: { $ifNull: ['$orderItems.sellerRevenue', 0] } },
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalOrdersCount: { $sum: 1 },
+              totalRevenue: {
+                $sum: {
+                  $cond: [{ $eq: ['$isPaid', true] }, '$sellerRevenue', 0],
+                },
+              },
+              paidOrdersCount: { $sum: { $cond: [{ $eq: ['$isPaid', true] }, 1, 0] } },
+              pendingOrdersCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [{ $eq: ['$isPaid', true] }, { $eq: ['$isDelivered', false] }],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              deliveredOrdersCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [{ $eq: ['$isPaid', true] }, { $eq: ['$isDelivered', true] }],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              lateOrdersCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ['$isPaid', true] },
+                        { $eq: ['$isDelivered', false] },
+                        { $lte: ['$paidAt', overdue7] },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+            },
+          },
+        ],
+        as: 'orderStats',
+      },
+    },
+    {
+      $addFields: {
+        totalProducts: { $ifNull: [{ $arrayElemAt: ['$productStats.totalProducts', 0] }, 0] },
+        totalOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.totalOrdersCount', 0] }, 0] },
+        totalRevenue: { $ifNull: [{ $arrayElemAt: ['$orderStats.totalRevenue', 0] }, 0] },
+        paidOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.paidOrdersCount', 0] }, 0] },
+        pendingOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.pendingOrdersCount', 0] }, 0] },
+        deliveredOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.deliveredOrdersCount', 0] }, 0] },
+        lateOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.lateOrdersCount', 0] }, 0] },
+      },
+    },
+    {
+      $addFields: {
+        deliveryRate: {
+          $cond: [
+            { $gt: ['$paidOrdersCount', 0] },
+            {
+              $multiply: [{ $divide: ['$deliveredOrdersCount', '$paidOrdersCount'] }, 100],
+            },
+            0,
+          ],
+        },
+      },
+    },
+    {
+      $project: {
+        name: 1,
+        email: 1,
+        phoneNumber: 1,
+        shopName: 1,
+        shopCategory: 1,
+        'address.country': 1,
+        isApproved: 1,
+        isActive: 1,
+        walletBalance: 1,
+        totalProducts: 1,
+        totalOrdersCount: 1,
+        paidOrdersCount: 1,
+        deliveredOrdersCount: 1,
+        pendingOrdersCount: 1,
+        lateOrdersCount: 1,
+        deliveryRate: 1,
+        totalRevenue: 1,
+        createdAt: 1,
+      },
+    },
+    { $sort: sortStage },
+  ]);
+
+  const headers = [
+    'Seller ID',
+    'Shop Name',
+    'Owner Name',
+    'Email',
+    'Phone',
+    'Category',
+    'Country',
+    'Approved',
+    'Active',
+    'Products',
+    'Orders Total',
+    'Paid Orders',
+    'Delivered Orders',
+    'Pending Orders',
+    'Late Orders',
+    'Delivery Rate (%)',
+    'Revenue (ETB)',
+    'Wallet Balance (ETB)',
+    'Created At',
+  ];
+
+  const escapeCsv = (value) => {
+    const text = String(value ?? '');
+    if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  };
+
+  const rows = sellers.map((seller) =>
+    [
+      seller._id,
+      seller.shopName,
+      seller.name,
+      seller.email,
+      seller.phoneNumber,
+      seller.shopCategory,
+      seller.address?.country,
+      seller.isApproved ? 'Yes' : 'No',
+      seller.isActive ? 'Yes' : 'No',
+      Number(seller.totalProducts || 0),
+      Number(seller.totalOrdersCount || 0),
+      Number(seller.paidOrdersCount || 0),
+      Number(seller.deliveredOrdersCount || 0),
+      Number(seller.pendingOrdersCount || 0),
+      Number(seller.lateOrdersCount || 0),
+      Number(seller.deliveryRate || 0).toFixed(2),
+      Number(seller.totalRevenue || 0).toFixed(2),
+      Number(seller.walletBalance || 0).toFixed(2),
+      seller.createdAt ? new Date(seller.createdAt).toISOString() : '',
+    ]
+      .map(escapeCsv)
+      .join(',')
+  );
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = `sellers-export-${timestamp}.csv`;
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename=\"${filename}\"`);
+  res.status(200).send(csv);
 };
 
 // @desc    Update seller status (approve/suspend/reactivate)
@@ -868,6 +1090,7 @@ const getSellerOrdersForAdmin = async (req, res) => {
 
 module.exports = {
   getSellersForAdmin,
+  exportSellersForAdmin,
   getSellerDetailsForAdmin,
   getSellerTransactionsForAdmin,
   getSellerProductsForAdmin,

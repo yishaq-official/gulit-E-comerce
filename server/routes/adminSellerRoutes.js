@@ -4,6 +4,7 @@ const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware');
 const {
   getSellersForAdmin,
+  exportSellersForAdmin,
   getSellerDetailsForAdmin,
   getSellerTransactionsForAdmin,
   getSellerProductsForAdmin,
@@ -14,6 +15,7 @@ const {
 } = require('../controllers/adminSellerController');
 
 router.get('/', protect, admin, getSellersForAdmin);
+router.get('/export', protect, admin, exportSellersForAdmin);
 router.get('/:id/transactions', protect, admin, getSellerTransactionsForAdmin);
 router.get('/:id/products', protect, admin, getSellerProductsForAdmin);
 router.get('/:id/orders', protect, admin, getSellerOrdersForAdmin);
