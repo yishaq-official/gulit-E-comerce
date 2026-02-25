@@ -45,8 +45,21 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 10,
     }),
     adminGetSellers: builder.query({
-      query: ({ status = 'all', keyword = '' } = {}) => ({
-        url: `/api/admin/sellers?status=${encodeURIComponent(status)}&keyword=${encodeURIComponent(keyword)}`,
+      query: ({
+        status = 'all',
+        keyword = '',
+        category = 'all',
+        country = 'all',
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        page = 1,
+        limit = 10,
+      } = {}) => ({
+        url: `/api/admin/sellers?status=${encodeURIComponent(status)}&keyword=${encodeURIComponent(keyword)}&category=${encodeURIComponent(
+          category
+        )}&country=${encodeURIComponent(country)}&sortBy=${encodeURIComponent(sortBy)}&sortOrder=${encodeURIComponent(
+          sortOrder
+        )}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`,
       }),
       keepUnusedDataFor: 5,
       providesTags: ['AdminSeller'],

@@ -3,14 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   FaCheckCircle,
-  FaClock,
+  FaChevronLeft,
+  FaChevronRight,
   FaPowerOff,
   FaSearch,
   FaShieldAlt,
   FaSignOutAlt,
+  FaSortAmountDown,
   FaStore,
   FaSync,
-  FaTimesCircle,
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
@@ -19,11 +20,24 @@ import { useAdminGetSellersQuery, useAdminUpdateSellerStatusMutation } from '../
 import { BASE_URL } from '../../store/slices/apiSlice';
 import AdminSidebar from '../components/AdminSidebar';
 
+const categories = ['all', 'Electronics', 'Clothing', 'Home & Kitchen', 'Books', 'Beauty', 'Other'];
+const countries = ['all', 'Ethiopia'];
+
 const statusOptions = [
-  { key: 'all', label: 'All Sellers', icon: FaStore },
-  { key: 'pending', label: 'Pending', icon: FaClock },
-  { key: 'approved', label: 'Approved', icon: FaCheckCircle },
-  { key: 'suspended', label: 'Suspended', icon: FaTimesCircle },
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'approved', label: 'Approved' },
+  { key: 'suspended', label: 'Suspended' },
+];
+
+const sortOptions = [
+  { value: 'createdAt_desc', label: 'Newest' },
+  { value: 'createdAt_asc', label: 'Oldest' },
+  { value: 'revenue_desc', label: 'Top Revenue' },
+  { value: 'paidOrders_desc', label: 'Most Paid Orders' },
+  { value: 'pendingOrders_desc', label: 'Most Pending Orders' },
+  { value: 'products_desc', label: 'Most Products' },
+  { value: 'shopName_asc', label: 'Shop A-Z' },
 ];
 
 const fileUrl = (path) => {
@@ -32,19 +46,44 @@ const fileUrl = (path) => {
   return `${BASE_URL}/${String(path).replace(/^\/+/, '')}`;
 };
 
+const currency = (value) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'ETB',
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0));
+
 const AdminSellerReviewScreen = () => {
   const { adminInfo } = useSelector((state) => state.adminAuth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [status, setStatus] = useState('all');
+  const [category, setCategory] = useState('all');
+  const [country, setCountry] = useState('all');
   const [searchInput, setSearchInput] = useState('');
   const [keyword, setKeyword] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [sortValue, setSortValue] = useState('createdAt_desc');
 
-  const { data: sellers = [], isLoading, isError, refetch, isFetching } = useAdminGetSellersQuery({
+  const [sortBy, sortOrder] = sortValue.split('_');
+
+  const { data, isLoading, isError, refetch, isFetching } = useAdminGetSellersQuery({
     status,
     keyword,
+    category,
+    country,
+    sortBy,
+    sortOrder,
+    page,
+    limit,
   });
+
+  const sellers = data?.sellers || [];
+  const pages = data?.pages || 1;
+  const total = data?.total || 0;
+
   const [updateSellerStatus, { isLoading: updating }] = useAdminUpdateSellerStatusMutation();
 
   const logoutHandler = () => {
@@ -64,6 +103,7 @@ const AdminSellerReviewScreen = () => {
 
   const submitSearch = (e) => {
     e.preventDefault();
+    setPage(1);
     setKeyword(searchInput.trim());
   };
 
@@ -76,6 +116,11 @@ const AdminSellerReviewScreen = () => {
     }
   };
 
+  const onChangeFilter = (updater) => {
+    setPage(1);
+    updater();
+  };
+
   return (
     <div className="min-h-screen bg-[#070c18] text-white flex flex-col">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#081122]/95 backdrop-blur">
@@ -86,7 +131,7 @@ const AdminSellerReviewScreen = () => {
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300 font-bold">Gulit Admin</p>
-              <p className="text-sm font-bold text-gray-100">Seller Review Center</p>
+              <p className="text-sm font-bold text-gray-100">Seller Management</p>
             </div>
           </div>
           <button
@@ -105,14 +150,10 @@ const AdminSellerReviewScreen = () => {
 
           <section className="space-y-6">
             <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-[#0f172a]/95 via-[#111827]/95 to-[#0b1324]/95 p-6">
-              <p className="text-xs uppercase tracking-[0.18em] text-cyan-300 font-bold mb-2">Admin Review</p>
-              <h1 className="text-2xl sm:text-3xl font-black">Seller Verification & Risk Controls</h1>
-              <p className="text-gray-300 mt-2">
-                Review onboarding submissions, approve legitimate stores, and suspend risky accounts.
-              </p>
-              <p className="text-xs text-gray-500 mt-3">
-                Signed in as {adminInfo?.name} ({adminInfo?.email})
-              </p>
+              <p className="text-xs uppercase tracking-[0.18em] text-cyan-300 font-bold mb-2">Phase 1</p>
+              <h1 className="text-2xl sm:text-3xl font-black">Seller List & Controls</h1>
+              <p className="text-gray-300 mt-2">Filter, sort, and inspect sellers in one clean table. Click any row to open seller detail workspace.</p>
+              <p className="text-xs text-gray-500 mt-3">Signed in as {adminInfo?.name} ({adminInfo?.email})</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -120,42 +161,80 @@ const AdminSellerReviewScreen = () => {
                 <button
                   key={option.key}
                   type="button"
-                  onClick={() => setStatus(option.key)}
+                  onClick={() => onChangeFilter(() => setStatus(option.key))}
                   className={`rounded-xl border px-4 py-3 text-left ${
                     status === option.key
                       ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200'
                       : 'border-white/10 bg-[#0f172a] text-gray-300 hover:bg-white/[0.03]'
                   }`}
                 >
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <option.icon /> {option.label}
-                  </div>
+                  <p className="text-sm font-bold">{option.label}</p>
                   <p className="text-xl font-black mt-1">{counts[option.key]}</p>
                 </button>
               ))}
             </div>
 
-            <form onSubmit={submitSearch} className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row gap-3">
-              <div className="relative flex-1">
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search by shop name, email, phone, ID..."
-                  className="w-full pl-10 pr-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
-                />
+            <form onSubmit={submitSearch} className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+                <div className="relative md:col-span-2">
+                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search shop, owner, email, phone, national ID..."
+                    className="w-full pl-10 pr-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+                <select
+                  value={category}
+                  onChange={(e) => onChangeFilter(() => setCategory(e.target.value))}
+                  className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                >
+                  {categories.map((item) => (
+                    <option key={item} value={item} className="bg-[#0b1220]">
+                      Category: {item}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={country}
+                  onChange={(e) => onChangeFilter(() => setCountry(e.target.value))}
+                  className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                >
+                  {countries.map((item) => (
+                    <option key={item} value={item} className="bg-[#0b1220]">
+                      Country: {item}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={sortValue}
+                  onChange={(e) => onChangeFilter(() => setSortValue(e.target.value))}
+                  className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                >
+                  {sortOptions.map((item) => (
+                    <option key={item.value} value={item.value} className="bg-[#0b1220]">
+                      Sort: {item.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <button type="submit" className="px-5 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black">
-                Search
-              </button>
-              <button
-                type="button"
-                onClick={refetch}
-                className="px-5 py-3 rounded-xl border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] text-gray-200 font-bold inline-flex items-center gap-2"
-              >
-                <FaSync className={isFetching ? 'animate-spin' : ''} /> Refresh
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="submit" className="px-5 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black">
+                  Search
+                </button>
+                <button
+                  type="button"
+                  onClick={refetch}
+                  className="px-5 py-3 rounded-xl border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] text-gray-200 font-bold inline-flex items-center gap-2"
+                >
+                  <FaSync className={isFetching ? 'animate-spin' : ''} /> Refresh
+                </button>
+                <span className="px-4 py-3 rounded-xl border border-white/10 bg-[#020617]/80 text-sm text-gray-300 inline-flex items-center gap-2">
+                  <FaSortAmountDown /> {total} sellers found
+                </span>
+              </div>
             </form>
 
             {isLoading ? <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 text-gray-300">Loading sellers...</div> : null}
@@ -165,86 +244,146 @@ const AdminSellerReviewScreen = () => {
               </div>
             ) : null}
 
-            <div className="space-y-4">
-              {!isLoading && !isError && sellers.length === 0 ? (
-                <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 text-gray-400">No sellers found for this filter.</div>
-              ) : null}
+            {!isLoading && !isError && (
+              <div className="bg-[#0f172a] border border-white/10 rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1200px]">
+                    <thead className="bg-[#0a1224] border-b border-white/10">
+                      <tr className="text-left text-xs uppercase tracking-wider text-gray-400">
+                        <th className="px-4 py-3">Seller</th>
+                        <th className="px-4 py-3">Category</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Products</th>
+                        <th className="px-4 py-3">Paid Orders</th>
+                        <th className="px-4 py-3">Pending Orders</th>
+                        <th className="px-4 py-3">Revenue</th>
+                        <th className="px-4 py-3">KYC</th>
+                        <th className="px-4 py-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sellers.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="px-4 py-8 text-center text-gray-400">
+                            No sellers found for these filters.
+                          </td>
+                        </tr>
+                      ) : (
+                        sellers.map((seller) => (
+                          <tr
+                            key={seller._id}
+                            className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer"
+                            onClick={() => navigate(`/admin/sellers/${seller._id}`)}
+                          >
+                            <td className="px-4 py-4">
+                              <p className="font-black text-gray-100">{seller.shopName}</p>
+                              <p className="text-sm text-gray-400">{seller.name}</p>
+                              <p className="text-xs text-gray-500">{seller.email}</p>
+                              <p className="text-xs text-gray-500">{seller.phoneNumber}</p>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-300">
+                              <p>{seller.shopCategory || 'Other'}</p>
+                              <p className="text-xs text-gray-500">{seller.address?.country || '-'}</p>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex flex-col gap-2">
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-black border w-fit ${seller.isApproved ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
+                                  {seller.isApproved ? 'Approved' : 'Pending'}
+                                </span>
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-black border w-fit ${seller.isActive ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200' : 'border-red-500/30 bg-red-500/10 text-red-200'}`}>
+                                  {seller.isActive ? 'Active' : 'Suspended'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 text-sm font-bold text-gray-200">{seller.totalProducts || 0}</td>
+                            <td className="px-4 py-4 text-sm font-bold text-gray-200">{seller.paidOrdersCount || 0}</td>
+                            <td className="px-4 py-4 text-sm font-bold text-amber-200">{seller.pendingOrdersCount || 0}</td>
+                            <td className="px-4 py-4 text-sm font-black text-emerald-200">{currency(seller.totalRevenue)}</td>
+                            <td className="px-4 py-4">
+                              <div className="flex flex-col gap-1 text-xs">
+                                <a href={fileUrl(seller.kycDocuments?.idCardImage)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-cyan-300 hover:text-cyan-200">
+                                  ID
+                                </a>
+                                <a href={fileUrl(seller.kycDocuments?.merchantLicenseImage)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-cyan-300 hover:text-cyan-200">
+                                  License
+                                </a>
+                                <a href={fileUrl(seller.kycDocuments?.taxReceiptImage)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-cyan-300 hover:text-cyan-200">
+                                  Tax
+                                </a>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                                {!seller.isApproved ? (
+                                  <button
+                                    type="button"
+                                    disabled={updating}
+                                    onClick={() =>
+                                      applyStatusUpdate(seller._id, { isApproved: true, isActive: true }, `${seller.shopName} approved`)
+                                    }
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-[#04111f] text-xs font-black inline-flex items-center gap-1"
+                                  >
+                                    <FaCheckCircle /> Approve
+                                  </button>
+                                ) : null}
+                                {seller.isActive ? (
+                                  <button
+                                    type="button"
+                                    disabled={updating}
+                                    onClick={() => applyStatusUpdate(seller._id, { isActive: false }, `${seller.shopName} suspended`)}
+                                    className="px-3 py-1.5 rounded-lg bg-red-500/90 hover:bg-red-500 text-white text-xs font-black inline-flex items-center gap-1"
+                                  >
+                                    <FaPowerOff /> Suspend
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={updating}
+                                    onClick={() => applyStatusUpdate(seller._id, { isActive: true }, `${seller.shopName} reactivated`)}
+                                    className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-[#04111f] text-xs font-black inline-flex items-center gap-1"
+                                  >
+                                    <FaShieldAlt /> Reactivate
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-              {sellers.map((seller) => (
-                <div key={seller._id} className="bg-[#0f172a] border border-white/10 rounded-2xl p-5">
-                  <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-xl font-black">{seller.shopName}</h3>
-                      <p className="text-gray-400">{seller.name} • {seller.email}</p>
-                      <p className="text-gray-500 text-sm mt-1">Category: {seller.shopCategory || 'Other'} • Phone: {seller.phoneNumber}</p>
-                      <p className="text-gray-500 text-xs mt-1">Registered: {new Date(seller.createdAt).toLocaleString()}</p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-black border ${seller.isApproved ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
-                        {seller.isApproved ? 'Approved' : 'Pending'}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-black border ${seller.isActive ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200' : 'border-red-500/30 bg-red-500/10 text-red-200'}`}>
-                        {seller.isActive ? 'Active' : 'Suspended'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <a href={fileUrl(seller.kycDocuments?.idCardImage)} target="_blank" rel="noreferrer" className="rounded-xl border border-white/10 bg-[#020617]/80 px-4 py-3 hover:bg-white/[0.03]">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">KYC Document</p>
-                      <p className="font-bold">National ID</p>
-                    </a>
-                    <a href={fileUrl(seller.kycDocuments?.merchantLicenseImage)} target="_blank" rel="noreferrer" className="rounded-xl border border-white/10 bg-[#020617]/80 px-4 py-3 hover:bg-white/[0.03]">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">KYC Document</p>
-                      <p className="font-bold">Merchant License</p>
-                    </a>
-                    <a href={fileUrl(seller.kycDocuments?.taxReceiptImage)} target="_blank" rel="noreferrer" className="rounded-xl border border-white/10 bg-[#020617]/80 px-4 py-3 hover:bg-white/[0.03]">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">KYC Document</p>
-                      <p className="font-bold">Tax Receipt</p>
-                    </a>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {!seller.isApproved ? (
-                      <button
-                        type="button"
-                        disabled={updating}
-                        onClick={() => applyStatusUpdate(seller._id, { isApproved: true, isActive: true }, `${seller.shopName} approved`)}
-                        className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-[#04111f] font-black inline-flex items-center gap-2"
-                      >
-                        <FaCheckCircle /> Approve Seller
-                      </button>
-                    ) : null}
-                    {seller.isActive ? (
-                      <button
-                        type="button"
-                        disabled={updating}
-                        onClick={() => applyStatusUpdate(seller._id, { isActive: false }, `${seller.shopName} suspended`)}
-                        className="px-4 py-2 rounded-lg bg-red-500/90 hover:bg-red-500 text-white font-black inline-flex items-center gap-2"
-                      >
-                        <FaPowerOff /> Suspend
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={updating}
-                        onClick={() => applyStatusUpdate(seller._id, { isActive: true }, `${seller.shopName} reactivated`)}
-                        className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black inline-flex items-center gap-2"
-                      >
-                        <FaShieldAlt /> Reactivate
-                      </button>
-                    )}
+                <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
+                  <p className="text-xs text-gray-500">Page {data?.page || 1} of {pages}</p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={page <= 1}
+                      onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                      className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                    >
+                      <FaChevronLeft />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={page >= pages}
+                      onClick={() => setPage((prev) => Math.min(prev + 1, pages))}
+                      className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                    >
+                      <FaChevronRight />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </section>
         </div>
       </main>
 
       <footer className="border-t border-white/10 bg-[#081122]">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-sm text-gray-400">
-          <p>Seller Review Center • Compliance and KYC Operations</p>
+          <p>Seller Management • Table Workspace</p>
           <p>© {new Date().getFullYear()} Gulit Marketplace Admin</p>
         </div>
       </footer>
