@@ -191,6 +191,23 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 5,
       providesTags: ['AdminFinance'],
     }),
+    adminGetSupportQueue: builder.query({
+      query: ({ page = 1, limit = 12, keyword = '', source = 'all', status = 'all' } = {}) => ({
+        url: `/api/admin/support?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&keyword=${encodeURIComponent(
+          keyword
+        )}&source=${encodeURIComponent(source)}&status=${encodeURIComponent(status)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSupport'],
+    }),
+    adminUpdateSupportCase: builder.mutation({
+      query: ({ source, id, action, note = '' }) => ({
+        url: `/api/admin/support/cases/${source}/${id}`,
+        method: 'PATCH',
+        body: { action, note },
+      }),
+      invalidatesTags: ['AdminSupport', 'AdminOrder', 'AdminSeller'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -215,4 +232,6 @@ export const {
   useAdminGetOrdersQuery,
   useAdminUpdateOrderDisputeMutation,
   useAdminGetFinanceOverviewQuery,
+  useAdminGetSupportQueueQuery,
+  useAdminUpdateSupportCaseMutation,
 } = adminApiSlice;
