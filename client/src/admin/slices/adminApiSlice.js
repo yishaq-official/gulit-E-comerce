@@ -182,6 +182,15 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['AdminOrder'],
     }),
+    adminGetFinanceOverview: builder.query({
+      query: ({ page = 1, limit = 12, keyword = '' } = {}) => ({
+        url: `/api/admin/finance?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&keyword=${encodeURIComponent(
+          keyword
+        )}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminFinance'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -205,4 +214,5 @@ export const {
   useAdminUpdateUserRoleMutation,
   useAdminGetOrdersQuery,
   useAdminUpdateOrderDisputeMutation,
+  useAdminGetFinanceOverviewQuery,
 } = adminApiSlice;

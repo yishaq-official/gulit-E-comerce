@@ -42,6 +42,6 @@ const baseQuery = fetchBaseQuery({
 export const apiSlice = createApi({
   baseQuery,
   // 👇 Added 'SellerProduct' so your inventory table auto-refreshes!
-  tagTypes: ['Product', 'Order', 'User', 'seller', 'SellerProduct', 'AdminSeller', 'AdminUser', 'AdminOrder'], 
+  tagTypes: ['Product', 'Order', 'User', 'seller', 'SellerProduct', 'AdminSeller', 'AdminUser', 'AdminOrder', 'AdminFinance'],
   endpoints: (builder) => ({}),
 });
