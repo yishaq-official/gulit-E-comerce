@@ -1,10 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   FaCheckCircle,
   FaClock,
-  FaHome,
   FaPowerOff,
   FaSearch,
   FaShieldAlt,
@@ -12,20 +11,19 @@ import {
   FaStore,
   FaSync,
   FaTimesCircle,
-  FaUserCheck,
-  FaUsers,
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
 import { adminLogout } from '../slices/adminAuthSlice';
 import { useAdminGetSellersQuery, useAdminUpdateSellerStatusMutation } from '../slices/adminApiSlice';
 import { BASE_URL } from '../../store/slices/apiSlice';
+import AdminSidebar from '../components/AdminSidebar';
 
 const statusOptions = [
+  { key: 'all', label: 'All Sellers', icon: FaStore },
   { key: 'pending', label: 'Pending', icon: FaClock },
   { key: 'approved', label: 'Approved', icon: FaCheckCircle },
   { key: 'suspended', label: 'Suspended', icon: FaTimesCircle },
-  { key: 'all', label: 'All Sellers', icon: FaStore },
 ];
 
 const fileUrl = (path) => {
@@ -39,7 +37,7 @@ const AdminSellerReviewScreen = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [status, setStatus] = useState('pending');
+  const [status, setStatus] = useState('all');
   const [searchInput, setSearchInput] = useState('');
   const [keyword, setKeyword] = useState('');
 
@@ -103,26 +101,7 @@ const AdminSellerReviewScreen = () => {
 
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-          <aside className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 h-fit lg:sticky lg:top-24">
-            <div className="flex items-center justify-center mb-4 py-2">
-              <img src={logo} alt="Gulit" className="w-40 h-40 object-contain" />
-            </div>
-            <p className="text-xs uppercase tracking-[0.16em] text-cyan-300 font-bold mb-3 px-2">Navigation</p>
-            <nav className="space-y-1.5">
-              <Link to="/admin/dashboard" className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent hover:bg-white/[0.03] text-gray-300">
-                <FaHome />
-                <span className="font-semibold">Dashboard</span>
-              </Link>
-              <div className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-200">
-                <FaUserCheck />
-                <span className="font-semibold">Seller Review</span>
-              </div>
-              <div className="w-full flex items-center gap-3 px-3 py-3 rounded-xl border border-transparent text-gray-500">
-                <FaUsers />
-                <span className="font-semibold">User Management</span>
-              </div>
-            </nav>
-          </aside>
+          <AdminSidebar activeKey="seller-review" />
 
           <section className="space-y-6">
             <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-[#0f172a]/95 via-[#111827]/95 to-[#0b1324]/95 p-6">

@@ -1,25 +1,21 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   FaArrowRight,
   FaChartLine,
   FaClipboardList,
   FaExclamationTriangle,
-  FaGavel,
-  FaHome,
-  FaLifeRing,
-  FaMoneyCheckAlt,
   FaSearch,
   FaShieldAlt,
   FaSignOutAlt,
   FaStore,
-  FaUserCheck,
   FaUsers,
 } from 'react-icons/fa';
 import { adminLogout } from '../slices/adminAuthSlice';
 import { useAdminStatsQuery } from '../slices/adminApiSlice';
 import logo from '../../assets/gulit.png';
+import AdminSidebar from '../components/AdminSidebar';
 
 const AdminDashboardScreen = () => {
   const { adminInfo } = useSelector((state) => state.adminAuth);
@@ -110,15 +106,6 @@ const AdminDashboardScreen = () => {
     { title: 'Risk Alerts', count: stats?.riskAlerts || 0, color: 'text-orange-200' },
   ];
 
-  const navItems = [
-    { label: 'Dashboard', icon: FaHome, active: true, to: '/admin/dashboard' },
-    { label: 'Seller Review', icon: FaUserCheck, active: false, to: '/admin/sellers' },
-    { label: 'User Management', icon: FaUsers, active: false },
-    { label: 'Orders & Disputes', icon: FaGavel, active: false },
-    { label: 'Finance', icon: FaMoneyCheckAlt, active: false },
-    { label: 'Support Desk', icon: FaLifeRing, active: false },
-  ];
-
   return (
     <div className="min-h-screen bg-[#070c18] text-white flex flex-col">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#081122]/95 backdrop-blur">
@@ -150,28 +137,7 @@ const AdminDashboardScreen = () => {
 
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-          <aside className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 h-fit lg:sticky lg:top-24">
-            <div className="flex items-center justify-center mb-4 py-2">
-              <img src={logo} alt="Gulit" className="w-40 h-40 object-contain" />
-            </div>
-            <p className="text-xs uppercase tracking-[0.16em] text-cyan-300 font-bold mb-3 px-2">Navigation</p>
-            <nav className="space-y-1.5">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.to || '#'}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors ${
-                    item.active
-                      ? 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-200'
-                      : 'border border-transparent hover:bg-white/[0.03] text-gray-300'
-                  }`}
-                >
-                  <item.icon />
-                  <span className="font-semibold">{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-          </aside>
+          <AdminSidebar activeKey="dashboard" />
 
           <section className="space-y-6">
             <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-[#0f172a]/95 via-[#111827]/95 to-[#0b1324]/95 p-6">
