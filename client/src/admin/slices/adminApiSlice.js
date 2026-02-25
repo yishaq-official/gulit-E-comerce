@@ -72,6 +72,13 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['AdminSeller', 'Order'],
     }),
+    adminGetSellerDetails: builder.query({
+      query: (sellerId) => ({
+        url: `/api/admin/sellers/${sellerId}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSeller'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -85,4 +92,5 @@ export const {
   useAdminStatsQuery,
   useAdminGetSellersQuery,
   useAdminUpdateSellerStatusMutation,
+  useAdminGetSellerDetailsQuery,
 } = adminApiSlice;

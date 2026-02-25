@@ -1,4 +1,8 @@
 const Seller = require('../models/sellerModel');
+const Product = require('../models/productModel');
+const Order = require('../models/orderModel');
+const SellerWalletTransaction = require('../models/sellerWalletTransactionModel');
+const mongoose = require('mongoose');
 
 // @desc    Get sellers for admin review
 // @route   GET /api/admin/sellers
@@ -194,7 +198,139 @@ const updateSellerStatusByAdmin = async (req, res) => {
   });
 };
 
+// @desc    Get seller detail workspace data for admin
+// @route   GET /api/admin/sellers/:id
+// @access  Private/Admin
+const getSellerDetailsForAdmin = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid seller id' });
+  }
+
+  const sellerId = new mongoose.Types.ObjectId(id);
+
+  const seller = await Seller.findById(sellerId).select('-password -resetPasswordToken -resetPasswordExpires');
+  if (!seller) {
+    return res.status(404).json({ message: 'Seller not found' });
+  }
+
+  const [summaryAgg, recentProducts, recentOrdersRaw, recentTransactions] = await Promise.all([
+    Order.aggregate([
+      { $unwind: '$orderItems' },
+      { $match: { 'orderItems.seller': sellerId } },
+      {
+        $group: {
+          _id: '$_id',
+          isPaid: { $first: '$isPaid' },
+          isDelivered: { $first: '$isDelivered' },
+          paidAt: { $first: '$paidAt' },
+          deliveredAt: { $first: '$deliveredAt' },
+          createdAt: { $first: '$createdAt' },
+          sellerRevenue: { $sum: { $ifNull: ['$orderItems.sellerRevenue', 0] } },
+          platformFee: { $sum: { $ifNull: ['$orderItems.platformFee', 0] } },
+          itemCount: { $sum: '$orderItems.qty' },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          paidOrdersCount: { $sum: { $cond: [{ $eq: ['$isPaid', true] }, 1, 0] } },
+          pendingOrdersCount: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [{ $eq: ['$isPaid', true] }, { $eq: ['$isDelivered', false] }],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          deliveredOrdersCount: { $sum: { $cond: [{ $eq: ['$isDelivered', true] }, 1, 0] } },
+          unpaidOrdersCount: { $sum: { $cond: [{ $eq: ['$isPaid', false] }, 1, 0] } },
+          sellerRevenue: {
+            $sum: {
+              $cond: [{ $eq: ['$isPaid', true] }, '$sellerRevenue', 0],
+            },
+          },
+          platformContribution: {
+            $sum: {
+              $cond: [{ $eq: ['$isPaid', true] }, '$platformFee', 0],
+            },
+          },
+        },
+      },
+    ]),
+    Product.find({ seller: sellerId })
+      .select('name category price countInStock image rating numReviews createdAt')
+      .sort({ createdAt: -1 })
+      .limit(8),
+    Order.find({ 'orderItems.seller': sellerId })
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(12),
+    SellerWalletTransaction.find({ seller: sellerId })
+      .populate('order', '_id totalPrice isPaid isDelivered paidAt createdAt')
+      .sort({ createdAt: -1 })
+      .limit(12),
+  ]);
+
+  const summary = summaryAgg[0] || {
+    totalOrders: 0,
+    paidOrdersCount: 0,
+    pendingOrdersCount: 0,
+    deliveredOrdersCount: 0,
+    unpaidOrdersCount: 0,
+    sellerRevenue: 0,
+    platformContribution: 0,
+  };
+
+  const recentOrders = recentOrdersRaw.map((order) => {
+    let sellerRevenue = 0;
+    let sellerItems = 0;
+    order.orderItems.forEach((item) => {
+      if (String(item.seller) === String(sellerId)) {
+        sellerRevenue += Number(item.sellerRevenue || 0);
+        sellerItems += Number(item.qty || 0);
+      }
+    });
+
+    return {
+      _id: order._id,
+      user: order.user,
+      isPaid: order.isPaid,
+      isDelivered: order.isDelivered,
+      paidAt: order.paidAt,
+      deliveredAt: order.deliveredAt,
+      createdAt: order.createdAt,
+      sellerRevenue,
+      sellerItems,
+      totalPrice: order.totalPrice,
+    };
+  });
+
+  const totalProducts = await Product.countDocuments({ seller: sellerId });
+  const lowStockProducts = await Product.countDocuments({ seller: sellerId, countInStock: { $gt: 0, $lte: 5 } });
+  const outOfStockProducts = await Product.countDocuments({ seller: sellerId, countInStock: { $lte: 0 } });
+
+  return res.json({
+    seller,
+    summary: {
+      ...summary,
+      totalProducts,
+      lowStockProducts,
+      outOfStockProducts,
+      walletBalance: Number(seller.walletBalance || 0),
+    },
+    recentProducts,
+    recentOrders,
+    recentTransactions,
+  });
+};
+
 module.exports = {
   getSellersForAdmin,
+  getSellerDetailsForAdmin,
   updateSellerStatusByAdmin,
 };
