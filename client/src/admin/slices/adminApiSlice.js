@@ -38,6 +38,12 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       keepUnusedDataFor: 5,
     }),
+    adminStats: builder.query({
+      query: () => ({
+        url: `${ADMIN_AUTH_URL}/stats`,
+      }),
+      keepUnusedDataFor: 10,
+    }),
   }),
 });
 
@@ -47,4 +53,5 @@ export const {
   useAdminResetPasswordMutation,
   useAdminGoogleLoginMutation,
   useAdminMeQuery,
+  useAdminStatsQuery,
 } = adminApiSlice;

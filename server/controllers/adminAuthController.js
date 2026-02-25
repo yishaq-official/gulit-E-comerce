@@ -2,6 +2,8 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
 const User = require('../models/userModel');
+const Seller = require('../models/sellerModel');
+const Order = require('../models/orderModel');
 const { generateToken } = require('./authController');
 const { sendEmail } = require('../utils/emailService');
 
@@ -197,10 +199,83 @@ const getAdminProfile = async (req, res) => {
   });
 };
 
+// @desc    Get admin dashboard stats
+// @route   GET /api/admin/auth/stats
+// @access  Private/Admin
+const getAdminStats = async (req, res) => {
+  const now = new Date();
+  const last30Days = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30);
+  const overdueDate = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7);
+
+  const [
+    registeredUsers,
+    activeUsersAgg,
+    activeSellers,
+    pendingSellerApprovals,
+    suspendedSellers,
+    overduePaidUndelivered,
+    paidOrdersCount,
+    financialAgg,
+    revenuePulseAgg,
+  ] = await Promise.all([
+    User.countDocuments({ role: 'buyer' }),
+    Order.aggregate([
+      { $match: { isPaid: true, paidAt: { $gte: last30Days } } },
+      { $group: { _id: '$user' } },
+      { $count: 'count' },
+    ]),
+    Seller.countDocuments({ isApproved: true, isActive: true }),
+    Seller.countDocuments({ isApproved: false }),
+    Seller.countDocuments({ isActive: false }),
+    Order.countDocuments({ isPaid: true, isDelivered: false, paidAt: { $lte: overdueDate } }),
+    Order.countDocuments({ isPaid: true }),
+    Order.aggregate([
+      { $match: { isPaid: true } },
+      { $unwind: '$orderItems' },
+      {
+        $group: {
+          _id: null,
+          platformIncome: { $sum: { $ifNull: ['$orderItems.platformFee', 0] } },
+          sellerIncome: { $sum: { $ifNull: ['$orderItems.sellerRevenue', 0] } },
+        },
+      },
+    ]),
+    Order.aggregate([
+      { $match: { isPaid: true, paidAt: { $gte: last30Days } } },
+      { $group: { _id: null, total: { $sum: { $ifNull: ['$totalPrice', 0] } } } },
+    ]),
+  ]);
+
+  const financial = financialAgg[0] || { platformIncome: 0, sellerIncome: 0 };
+  const activeUsers = activeUsersAgg[0]?.count || 0;
+  const revenuePulse = revenuePulseAgg[0]?.total || 0;
+  const platformIncome = Number(financial.platformIncome || 0);
+  const sellerIncome = Number(financial.sellerIncome || 0);
+  const totalMarketIncome = platformIncome + sellerIncome;
+  const riskAlerts = pendingSellerApprovals + suspendedSellers + overduePaidUndelivered;
+
+  return res.json({
+    registeredUsers,
+    activeUsers,
+    activeSellers,
+    riskAlerts,
+    revenuePulse,
+    platformIncome,
+    sellerIncome,
+    totalMarketIncome,
+    paidOrdersCount,
+    pendingSellerApprovals,
+    suspendedSellers,
+    overduePaidUndelivered,
+    lastUpdatedAt: now.toISOString(),
+  });
+};
+
 module.exports = {
   adminLogin,
   adminForgotPassword,
   adminResetPassword,
   adminGoogleLogin,
   getAdminProfile,
+  getAdminStats,
 };
