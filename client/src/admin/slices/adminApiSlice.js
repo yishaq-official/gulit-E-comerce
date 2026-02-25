@@ -96,10 +96,10 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       providesTags: ['AdminSeller'],
     }),
     adminGetSellerOrders: builder.query({
-      query: ({ sellerId, page = 1, limit = 10, keyword = '', status = 'all' } = {}) => ({
+      query: ({ sellerId, page = 1, limit = 10, keyword = '', status = 'all', risk = 'all' } = {}) => ({
         url: `/api/admin/sellers/${sellerId}/orders?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(
           limit
-        )}&keyword=${encodeURIComponent(keyword)}&status=${encodeURIComponent(status)}`,
+        )}&keyword=${encodeURIComponent(keyword)}&status=${encodeURIComponent(status)}&risk=${encodeURIComponent(risk)}`,
       }),
       keepUnusedDataFor: 5,
       providesTags: ['AdminSeller'],

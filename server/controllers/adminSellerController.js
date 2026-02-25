@@ -208,13 +208,17 @@ const getSellerDetailsForAdmin = async (req, res) => {
   }
 
   const sellerId = new mongoose.Types.ObjectId(id);
+  const now = new Date();
+  const overdue3 = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 3);
+  const overdue7 = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7);
+  const overdue14 = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 14);
 
   const seller = await Seller.findById(sellerId).select('-password -resetPasswordToken -resetPasswordExpires');
   if (!seller) {
     return res.status(404).json({ message: 'Seller not found' });
   }
 
-  const [summaryAgg, recentProducts, recentOrdersRaw, recentTransactions] = await Promise.all([
+  const [summaryAgg, riskAgg, recentProducts, recentOrdersRaw, recentTransactions] = await Promise.all([
     Order.aggregate([
       { $unwind: '$orderItems' },
       { $match: { 'orderItems.seller': sellerId } },
@@ -262,6 +266,84 @@ const getSellerDetailsForAdmin = async (req, res) => {
         },
       },
     ]),
+    Order.aggregate([
+      { $unwind: '$orderItems' },
+      { $match: { 'orderItems.seller': sellerId } },
+      {
+        $group: {
+          _id: '$_id',
+          isPaid: { $first: '$isPaid' },
+          isDelivered: { $first: '$isDelivered' },
+          paidAt: { $first: '$paidAt' },
+          createdAt: { $first: '$createdAt' },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          pendingWatchOrders: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$isPaid', true] },
+                    { $eq: ['$isDelivered', false] },
+                    { $lte: ['$paidAt', overdue3] },
+                    { $gt: ['$paidAt', overdue7] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          overdueDeliveries: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$isPaid', true] },
+                    { $eq: ['$isDelivered', false] },
+                    { $lte: ['$paidAt', overdue7] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          highRiskOrders: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$isPaid', true] },
+                    { $eq: ['$isDelivered', false] },
+                    { $lte: ['$paidAt', overdue14] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+          agingUnpaidOrders: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$isPaid', false] },
+                    { $lte: ['$createdAt', overdue7] },
+                  ],
+                },
+                1,
+                0,
+              ],
+            },
+          },
+        },
+      },
+    ]),
     Product.find({ seller: sellerId })
       .select('name category price countInStock image rating numReviews createdAt')
       .sort({ createdAt: -1 })
@@ -284,6 +366,12 @@ const getSellerDetailsForAdmin = async (req, res) => {
     unpaidOrdersCount: 0,
     sellerRevenue: 0,
     platformContribution: 0,
+  };
+  const riskSummary = riskAgg[0] || {
+    pendingWatchOrders: 0,
+    overdueDeliveries: 0,
+    highRiskOrders: 0,
+    agingUnpaidOrders: 0,
   };
 
   const recentOrders = recentOrdersRaw.map((order) => {
@@ -318,6 +406,7 @@ const getSellerDetailsForAdmin = async (req, res) => {
     seller,
     summary: {
       ...summary,
+      riskSummary,
       totalProducts,
       lowStockProducts,
       outOfStockProducts,
@@ -423,7 +512,7 @@ const getSellerProductsForAdmin = async (req, res) => {
 // @access  Private/Admin
 const getSellerOrdersForAdmin = async (req, res) => {
   const { id } = req.params;
-  const { page = 1, limit = 10, keyword = '', status = 'all' } = req.query;
+  const { page = 1, limit = 10, keyword = '', status = 'all', risk = 'all' } = req.query;
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: 'Invalid seller id' });
   }
@@ -433,6 +522,10 @@ const getSellerOrdersForAdmin = async (req, res) => {
   const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
   const skip = (normalizedPage - 1) * normalizedLimit;
   const trimmedKeyword = String(keyword || '').trim();
+  const now = new Date();
+  const overdue3 = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 3);
+  const overdue7 = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 7);
+  const overdue14 = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 14);
 
   const pipeline = [
     { $unwind: '$orderItems' },
@@ -484,6 +577,24 @@ const getSellerOrdersForAdmin = async (req, res) => {
     pipeline.push({ $match: { isDelivered: true } });
   }
 
+  if (risk === 'watch') {
+    pipeline.push({
+      $match: { isPaid: true, isDelivered: false, paidAt: { $lte: overdue3, $gt: overdue7 } },
+    });
+  } else if (risk === 'overdue') {
+    pipeline.push({
+      $match: { isPaid: true, isDelivered: false, paidAt: { $lte: overdue7 } },
+    });
+  } else if (risk === 'high') {
+    pipeline.push({
+      $match: { isPaid: true, isDelivered: false, paidAt: { $lte: overdue14 } },
+    });
+  } else if (risk === 'unpaidAging') {
+    pipeline.push({
+      $match: { isPaid: false, createdAt: { $lte: overdue7 } },
+    });
+  }
+
   if (trimmedKeyword) {
     const regex = new RegExp(trimmedKeyword, 'i');
     pipeline.push({
@@ -502,7 +613,29 @@ const getSellerOrdersForAdmin = async (req, res) => {
   });
 
   const [result] = await Order.aggregate(pipeline);
-  const orders = result?.orders || [];
+  const orders = (result?.orders || []).map((order) => {
+    const daysSincePaid = order.paidAt
+      ? Math.floor((now.getTime() - new Date(order.paidAt).getTime()) / (1000 * 60 * 60 * 24))
+      : null;
+    const daysSinceCreated = Math.floor((now.getTime() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+
+    let riskLevel = 'none';
+    if (order.isPaid && !order.isDelivered) {
+      if (daysSincePaid >= 14) riskLevel = 'high';
+      else if (daysSincePaid >= 7) riskLevel = 'overdue';
+      else if (daysSincePaid >= 3) riskLevel = 'watch';
+    } else if (!order.isPaid && daysSinceCreated >= 7) {
+      riskLevel = 'unpaidAging';
+    }
+
+    return {
+      ...order,
+      daysSincePaid,
+      daysSinceCreated,
+      riskLevel,
+      disputeReady: riskLevel === 'high' || riskLevel === 'overdue',
+    };
+  });
   const total = result?.metadata?.[0]?.total || 0;
   const pages = Math.max(Math.ceil(total / normalizedLimit), 1);
 

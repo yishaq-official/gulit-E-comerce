@@ -63,6 +63,7 @@ const AdminSellerDetailsScreen = () => {
   const [ordersKeywordInput, setOrdersKeywordInput] = useState('');
   const [ordersKeyword, setOrdersKeyword] = useState('');
   const [ordersStatus, setOrdersStatus] = useState('all');
+  const [ordersRisk, setOrdersRisk] = useState('all');
 
   const { data, isLoading, isError, refetch, isFetching } = useAdminGetSellerDetailsQuery(id);
   const [updateSellerStatus, { isLoading: updating }] = useAdminUpdateSellerStatusMutation();
@@ -75,7 +76,7 @@ const AdminSellerDetailsScreen = () => {
     { skip: activeTab !== 'products' }
   );
   const { data: orderData, isLoading: loadingOrders } = useAdminGetSellerOrdersQuery(
-    { sellerId: id, page: ordersPage, limit: 10, keyword: ordersKeyword, status: ordersStatus },
+    { sellerId: id, page: ordersPage, limit: 10, keyword: ordersKeyword, status: ordersStatus, risk: ordersRisk },
     { skip: activeTab !== 'orders' }
   );
 
@@ -84,6 +85,7 @@ const AdminSellerDetailsScreen = () => {
   const products = productData?.products || [];
   const orders = orderData?.orders || [];
   const transactions = txData?.transactions || [];
+  const riskSummary = summary?.riskSummary || {};
 
   const logoutHandler = () => {
     dispatch(adminLogout());
@@ -223,6 +225,29 @@ const AdminSellerDetailsScreen = () => {
                     <p className="text-xs text-gray-400 uppercase tracking-wide">Wallet Balance</p>
                     <p className="text-2xl font-black text-amber-200 mt-1">{currency(summary.walletBalance)}</p>
                     <p className="text-xs text-gray-500 mt-1">Current seller wallet</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Watch Orders</p>
+                    <p className="text-2xl font-black text-amber-200 mt-1">{riskSummary.pendingWatchOrders || 0}</p>
+                    <p className="text-xs text-gray-500 mt-1">Paid pending 3-7 days</p>
+                  </div>
+                  <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Overdue Deliveries</p>
+                    <p className="text-2xl font-black text-orange-200 mt-1">{riskSummary.overdueDeliveries || 0}</p>
+                    <p className="text-xs text-gray-500 mt-1">Paid pending 7+ days</p>
+                  </div>
+                  <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">High Risk Orders</p>
+                    <p className="text-2xl font-black text-red-300 mt-1">{riskSummary.highRiskOrders || 0}</p>
+                    <p className="text-xs text-gray-500 mt-1">Paid pending 14+ days</p>
+                  </div>
+                  <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4">
+                    <p className="text-xs text-gray-400 uppercase tracking-wide">Aging Unpaid</p>
+                    <p className="text-2xl font-black text-fuchsia-200 mt-1">{riskSummary.agingUnpaidOrders || 0}</p>
+                    <p className="text-xs text-gray-500 mt-1">Unpaid for 7+ days</p>
                   </div>
                 </div>
 
@@ -458,6 +483,20 @@ const AdminSellerDetailsScreen = () => {
                         <option value="pendingDelivery" className="bg-[#0b1220]">Pending Delivery</option>
                         <option value="delivered" className="bg-[#0b1220]">Delivered</option>
                       </select>
+                      <select
+                        value={ordersRisk}
+                        onChange={(e) => {
+                          setOrdersPage(1);
+                          setOrdersRisk(e.target.value);
+                        }}
+                        className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      >
+                        <option value="all" className="bg-[#0b1220]">Risk: All</option>
+                        <option value="watch" className="bg-[#0b1220]">Risk: Watch</option>
+                        <option value="overdue" className="bg-[#0b1220]">Risk: Overdue</option>
+                        <option value="high" className="bg-[#0b1220]">Risk: High</option>
+                        <option value="unpaidAging" className="bg-[#0b1220]">Risk: Unpaid Aging</option>
+                      </select>
                       <button type="submit" className="px-4 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black">
                         Apply
                       </button>
@@ -478,11 +517,12 @@ const AdminSellerDetailsScreen = () => {
                             <th className="px-4 py-3">Seller Revenue</th>
                             <th className="px-4 py-3">Paid</th>
                             <th className="px-4 py-3">Delivered</th>
+                            <th className="px-4 py-3">Risk</th>
                           </tr>
                         </thead>
                         <tbody>
                           {orders.length === 0 ? (
-                            <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-400">No orders found.</td></tr>
+                            <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-400">No orders found.</td></tr>
                           ) : (
                             orders.map((order) => (
                               <tr key={order._id} className="border-t border-white/5">
@@ -492,6 +532,29 @@ const AdminSellerDetailsScreen = () => {
                                 <td className="px-4 py-3 text-sm font-bold text-emerald-200">{currency(order.sellerRevenue)}</td>
                                 <td className="px-4 py-3 text-sm">{order.isPaid ? <span className="text-emerald-200 inline-flex items-center gap-1"><FaCheckCircle /> Paid</span> : <span className="text-amber-200 inline-flex items-center gap-1"><FaClock /> Unpaid</span>}</td>
                                 <td className="px-4 py-3 text-sm">{order.isDelivered ? <span className="text-cyan-200">Delivered</span> : <span className="text-amber-200">Pending</span>}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  {order.riskLevel === 'high' && (
+                                    <div className="space-y-1">
+                                      <span className="px-2 py-1 rounded-full text-xs font-black border border-red-500/40 bg-red-500/10 text-red-200">HIGH</span>
+                                      <p className="text-xs text-red-300">Dispute-ready</p>
+                                    </div>
+                                  )}
+                                  {order.riskLevel === 'overdue' && (
+                                    <div className="space-y-1">
+                                      <span className="px-2 py-1 rounded-full text-xs font-black border border-orange-500/40 bg-orange-500/10 text-orange-200">OVERDUE</span>
+                                      {order.disputeReady ? <p className="text-xs text-orange-300">Escalate soon</p> : null}
+                                    </div>
+                                  )}
+                                  {order.riskLevel === 'watch' && (
+                                    <span className="px-2 py-1 rounded-full text-xs font-black border border-amber-500/40 bg-amber-500/10 text-amber-200">WATCH</span>
+                                  )}
+                                  {order.riskLevel === 'unpaidAging' && (
+                                    <span className="px-2 py-1 rounded-full text-xs font-black border border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200">UNPAID AGING</span>
+                                  )}
+                                  {order.riskLevel === 'none' && (
+                                    <span className="px-2 py-1 rounded-full text-xs font-black border border-gray-500/30 bg-gray-500/10 text-gray-300">LOW</span>
+                                  )}
+                                </td>
                               </tr>
                             ))
                           )}
