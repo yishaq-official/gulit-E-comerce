@@ -2,6 +2,12 @@ const Order = require('../models/orderModel');
 const Seller = require('../models/sellerModel');
 const SellerWalletTransaction = require('../models/sellerWalletTransactionModel');
 
+const FINANCE_RANGE_CONFIG = {
+  '30d': { label: 'Last 30 Days', days: 30 },
+  '6m': { label: 'Last 6 Months', days: 183 },
+  '1y': { label: 'Last 1 Year', days: 365 },
+};
+
 // @desc    Get finance overview + transactions ledger for admin
 // @route   GET /api/admin/finance
 // @access  Private/Admin
@@ -157,6 +163,119 @@ const getAdminFinanceOverview = async (req, res) => {
   });
 };
 
+// @desc    Export finance report CSV by range
+// @route   GET /api/admin/finance/export
+// @access  Private/Admin
+const exportAdminFinanceReport = async (req, res) => {
+  const rangeKey = String(req.query.range || '30d').toLowerCase();
+  const rangeConfig = FINANCE_RANGE_CONFIG[rangeKey];
+  if (!rangeConfig) {
+    return res.status(400).json({ message: 'Invalid range. Use 30d, 6m, or 1y.' });
+  }
+
+  const now = new Date();
+  const fromDate = new Date(now.getTime() - rangeConfig.days * 24 * 60 * 60 * 1000);
+
+  const [summaryAgg, dailyAgg, paidOrdersCount, deliveredPaidOrdersCount] = await Promise.all([
+    Order.aggregate([
+      { $match: { isPaid: true, paidAt: { $gte: fromDate } } },
+      { $unwind: '$orderItems' },
+      {
+        $group: {
+          _id: null,
+          platformIncome: { $sum: { $ifNull: ['$orderItems.platformFee', 0] } },
+          sellerIncome: { $sum: { $ifNull: ['$orderItems.sellerRevenue', 0] } },
+          grossOrdersValue: { $sum: { $ifNull: ['$totalPrice', 0] } },
+        },
+      },
+    ]),
+    Order.aggregate([
+      { $match: { isPaid: true, paidAt: { $gte: fromDate } } },
+      { $unwind: '$orderItems' },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$paidAt',
+              timezone: 'UTC',
+            },
+          },
+          platformIncome: { $sum: { $ifNull: ['$orderItems.platformFee', 0] } },
+          sellerIncome: { $sum: { $ifNull: ['$orderItems.sellerRevenue', 0] } },
+          grossOrdersValue: { $sum: { $ifNull: ['$totalPrice', 0] } },
+          paidOrdersCount: { $addToSet: '$_id' },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          platformIncome: 1,
+          sellerIncome: 1,
+          grossOrdersValue: 1,
+          paidOrdersCount: { $size: '$paidOrdersCount' },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]),
+    Order.countDocuments({ isPaid: true, paidAt: { $gte: fromDate } }),
+    Order.countDocuments({ isPaid: true, isDelivered: true, paidAt: { $gte: fromDate } }),
+  ]);
+
+  const summary = summaryAgg[0] || { platformIncome: 0, sellerIncome: 0, grossOrdersValue: 0 };
+  const platformIncome = Number(summary.platformIncome || 0);
+  const sellerIncome = Number(summary.sellerIncome || 0);
+  const totalMarketIncome = platformIncome + sellerIncome;
+  const grossOrdersValue = Number(summary.grossOrdersValue || 0);
+  const deliveryRate = paidOrdersCount > 0 ? (deliveredPaidOrdersCount / paidOrdersCount) * 100 : 0;
+
+  const escapeCsv = (value) => {
+    const text = String(value ?? '');
+    if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  };
+
+  const summaryRows = [
+    ['Report Scope', rangeConfig.label],
+    ['From (UTC)', fromDate.toISOString()],
+    ['To (UTC)', now.toISOString()],
+    ['Paid Orders', paidOrdersCount],
+    ['Delivered Paid Orders', deliveredPaidOrdersCount],
+    ['Delivery Rate (%)', deliveryRate.toFixed(2)],
+    ['Platform Income (ETB)', platformIncome.toFixed(2)],
+    ['Seller Income (ETB)', sellerIncome.toFixed(2)],
+    ['Total Market Income (ETB)', totalMarketIncome.toFixed(2)],
+    ['Gross Orders Value (ETB)', grossOrdersValue.toFixed(2)],
+  ].map((row) => row.map(escapeCsv).join(','));
+
+  const dailyHeader = ['Date (UTC)', 'Paid Orders', 'Platform Income (ETB)', 'Seller Income (ETB)', 'Market Income (ETB)', 'Gross Orders Value (ETB)']
+    .map(escapeCsv)
+    .join(',');
+  const dailyRows = dailyAgg.map((item) =>
+    [
+      item._id,
+      Number(item.paidOrdersCount || 0),
+      Number(item.platformIncome || 0).toFixed(2),
+      Number(item.sellerIncome || 0).toFixed(2),
+      (Number(item.platformIncome || 0) + Number(item.sellerIncome || 0)).toFixed(2),
+      Number(item.grossOrdersValue || 0).toFixed(2),
+    ]
+      .map(escapeCsv)
+      .join(',')
+  );
+
+  const csv = [...summaryRows, '', dailyHeader, ...dailyRows].join('\n');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const filename = `finance-report-${rangeKey}-${stamp}.csv`;
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename=\"${filename}\"`);
+  return res.status(200).send(csv);
+};
+
 module.exports = {
   getAdminFinanceOverview,
+  exportAdminFinanceReport,
 };

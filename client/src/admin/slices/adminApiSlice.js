@@ -209,6 +209,13 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 5,
       providesTags: ['AdminFinance'],
     }),
+    adminExportFinanceReport: builder.mutation({
+      query: ({ range = '30d' } = {}) => ({
+        url: `/api/admin/finance/export?range=${encodeURIComponent(range)}`,
+        method: 'GET',
+        responseHandler: async (response) => response.text(),
+      }),
+    }),
     adminGetSupportQueue: builder.query({
       query: ({ page = 1, limit = 12, keyword = '', source = 'all', status = 'all' } = {}) => ({
         url: `/api/admin/support?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&keyword=${encodeURIComponent(
@@ -251,6 +258,7 @@ export const {
   useAdminGetOrdersQuery,
   useAdminUpdateOrderDisputeMutation,
   useAdminGetFinanceOverviewQuery,
+  useAdminExportFinanceReportMutation,
   useAdminGetSupportQueueQuery,
   useAdminUpdateSupportCaseMutation,
 } = adminApiSlice;

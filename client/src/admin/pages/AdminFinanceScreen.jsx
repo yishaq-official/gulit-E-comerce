@@ -4,16 +4,18 @@ import { useNavigate } from 'react-router-dom';
 import {
   FaChevronLeft,
   FaChevronRight,
+  FaFileDownload,
   FaMoneyCheckAlt,
   FaSearchDollar,
   FaSignOutAlt,
   FaSync,
   FaWallet,
 } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
 import AdminSidebar from '../components/AdminSidebar';
 import { adminLogout } from '../slices/adminAuthSlice';
-import { useAdminGetFinanceOverviewQuery } from '../slices/adminApiSlice';
+import { useAdminExportFinanceReportMutation, useAdminGetFinanceOverviewQuery } from '../slices/adminApiSlice';
 
 const currency = (value) =>
   new Intl.NumberFormat('en-US', {
@@ -33,6 +35,7 @@ const AdminFinanceScreen = () => {
   const [keyword, setKeyword] = useState('');
 
   const { data, isLoading, isError, isFetching, refetch } = useAdminGetFinanceOverviewQuery({ page, limit, keyword });
+  const [exportFinanceReport, { isLoading: exportingFinance }] = useAdminExportFinanceReportMutation();
 
   const summary = data?.summary || {};
   const trend = data?.trend30d || {};
@@ -48,6 +51,25 @@ const AdminFinanceScreen = () => {
     e.preventDefault();
     setPage(1);
     setKeyword(searchInput.trim());
+  };
+
+  const handleFinanceExport = async (range) => {
+    try {
+      const csvText = await exportFinanceReport({ range }).unwrap();
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.setAttribute('download', `finance-report-${range}-${stamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success(`Finance report exported (${range})`);
+    } catch (err) {
+      toast.error(err?.data?.message || err.error || 'Failed to export finance report');
+    }
   };
 
   return (
@@ -148,6 +170,32 @@ const AdminFinanceScreen = () => {
                   className="px-5 py-3 rounded-xl border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] text-gray-200 font-bold inline-flex items-center gap-2"
                 >
                   <FaSync className={isFetching ? 'animate-spin' : ''} /> Refresh
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={exportingFinance}
+                  onClick={() => handleFinanceExport('30d')}
+                  className="px-4 py-2.5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 font-bold inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  <FaFileDownload /> Export 30 Days
+                </button>
+                <button
+                  type="button"
+                  disabled={exportingFinance}
+                  onClick={() => handleFinanceExport('6m')}
+                  className="px-4 py-2.5 rounded-xl border border-cyan-500/35 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-200 font-bold inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  <FaFileDownload /> Export 6 Months
+                </button>
+                <button
+                  type="button"
+                  disabled={exportingFinance}
+                  onClick={() => handleFinanceExport('1y')}
+                  className="px-4 py-2.5 rounded-xl border border-violet-500/35 bg-violet-500/10 hover:bg-violet-500/20 text-violet-200 font-bold inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  <FaFileDownload /> Export 1 Year
                 </button>
               </div>
             </form>
