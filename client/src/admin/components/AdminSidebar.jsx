@@ -13,10 +13,10 @@ import logo from '../../assets/gulit.png';
 const navItems = [
   { key: 'dashboard', label: 'Dashboard', icon: FaHome, to: '/admin/dashboard' },
   { key: 'seller-review', label: 'Seller Review', icon: FaUserCheck, to: '/admin/sellers' },
-  { key: 'user-management', label: 'User Management', icon: FaUsers, disabled: true },
-  { key: 'orders-disputes', label: 'Orders & Disputes', icon: FaGavel, disabled: true },
-  { key: 'finance', label: 'Finance', icon: FaMoneyCheckAlt, disabled: true },
-  { key: 'support', label: 'Support Desk', icon: FaLifeRing, disabled: true },
+  { key: 'user-management', label: 'User Management', icon: FaUsers, to: '/admin/users' },
+  { key: 'orders-disputes', label: 'Orders & Disputes', icon: FaGavel, to: '/admin/disputes' },
+  { key: 'finance', label: 'Finance', icon: FaMoneyCheckAlt, to: '/admin/finance' },
+  { key: 'support', label: 'Support Desk', icon: FaLifeRing, to: '/admin/support' },
 ];
 
 const AdminSidebar = ({ activeKey }) => {
@@ -35,15 +35,6 @@ const AdminSidebar = ({ activeKey }) => {
               ? 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-200'
               : 'border border-transparent text-gray-300'
           }`;
-
-          if (item.disabled) {
-            return (
-              <div key={item.key} className={`${baseClass} opacity-55`}>
-                <ItemIcon />
-                <span className="font-semibold">{item.label}</span>
-              </div>
-            );
-          }
 
           return (
             <Link
