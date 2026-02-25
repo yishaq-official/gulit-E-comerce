@@ -1,8 +1,17 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { FaShieldAlt, FaUsers, FaStore, FaExclamationTriangle, FaSignOutAlt } from 'react-icons/fa';
+import {
+  FaArrowRight,
+  FaChartLine,
+  FaExclamationTriangle,
+  FaShieldAlt,
+  FaSignOutAlt,
+  FaStore,
+  FaUsers,
+} from 'react-icons/fa';
 import { adminLogout } from '../slices/adminAuthSlice';
+import logo from '../../assets/gulit.png';
 
 const AdminDashboardScreen = () => {
   const { adminInfo } = useSelector((state) => state.adminAuth);
@@ -15,49 +24,130 @@ const AdminDashboardScreen = () => {
   };
 
   const cards = [
-    { label: 'Total Users', value: '1,284', icon: FaUsers, color: 'text-cyan-300' },
-    { label: 'Active Sellers', value: '342', icon: FaStore, color: 'text-green-300' },
-    { label: 'Risk Alerts', value: '8', icon: FaExclamationTriangle, color: 'text-amber-300' },
+    {
+      label: 'Registered Users',
+      value: '1,284',
+      delta: '+6.2%',
+      icon: FaUsers,
+      iconColor: 'text-cyan-300',
+      chip: 'vs last week',
+    },
+    {
+      label: 'Active Sellers',
+      value: '342',
+      delta: '+3.1%',
+      icon: FaStore,
+      iconColor: 'text-emerald-300',
+      chip: 'approval stable',
+    },
+    {
+      label: 'Risk Alerts',
+      value: '8',
+      delta: '-2',
+      icon: FaExclamationTriangle,
+      iconColor: 'text-amber-300',
+      chip: 'needs review',
+    },
+    {
+      label: 'Revenue Pulse',
+      value: 'ETB 2.4M',
+      delta: '+12.8%',
+      icon: FaChartLine,
+      iconColor: 'text-fuchsia-300',
+      chip: 'monthly trend',
+    },
+  ];
+
+  const queues = [
+    { title: 'Seller Approvals', count: 14, color: 'text-cyan-200' },
+    { title: 'Dispute Tickets', count: 5, color: 'text-amber-200' },
+    { title: 'Refund Requests', count: 11, color: 'text-red-200' },
+    { title: 'Policy Violations', count: 3, color: 'text-orange-200' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a1020] text-white px-6 py-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-cyan-300 font-bold mb-2">Admin Workspace</p>
-            <h1 className="text-3xl font-black">Welcome, {adminInfo?.name}</h1>
-            <p className="text-gray-400 mt-2">Platform overview and operational controls.</p>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#172554_0%,_#0b1220_38%,_#050816_100%)] text-white px-4 sm:px-6 py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="relative overflow-hidden rounded-3xl border border-cyan-500/20 bg-gradient-to-r from-[#0f172a]/95 via-[#111827]/95 to-[#0b1324]/95 p-6 sm:p-8">
+          <div className="absolute -top-24 -right-20 w-80 h-80 rounded-full bg-cyan-400/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl" />
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <img src={logo} alt="Gulit" className="w-9 h-9 object-contain" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-cyan-300 font-bold mb-2">Gulit Command Center</p>
+                <h1 className="text-2xl sm:text-3xl font-black">Welcome, {adminInfo?.name}</h1>
+                <p className="text-gray-300 mt-2">Control trust, growth, and marketplace safety from one dashboard.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={logoutHandler}
+              className="inline-flex items-center justify-center gap-2 bg-red-500/15 hover:bg-red-500/25 text-red-200 font-bold px-5 py-3 rounded-xl border border-red-500/30 transition-colors"
+            >
+              <FaSignOutAlt /> Logout
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={logoutHandler}
-            className="inline-flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 font-bold px-5 py-3 rounded-xl border border-red-500/20"
-          >
-            <FaSignOutAlt /> Logout
-          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           {cards.map((card) => (
-            <div key={card.label} className="bg-[#111827] border border-gray-800 rounded-2xl p-6">
-              <div className="w-11 h-11 rounded-xl bg-[#0b1220] border border-gray-700 flex items-center justify-center mb-4">
-                <card.icon className={card.color} />
+            <div key={card.label} className="bg-[#0f172a]/90 border border-white/10 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-11 h-11 rounded-xl bg-[#020617]/80 border border-white/10 flex items-center justify-center">
+                  <card.icon className={card.iconColor} />
+                </div>
+                <span className="text-xs font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1">
+                  {card.delta}
+                </span>
               </div>
-              <p className="text-gray-400 text-sm">{card.label}</p>
+              <p className="text-sm text-gray-400">{card.label}</p>
               <p className="text-3xl font-black mt-1">{card.value}</p>
+              <p className="text-xs text-gray-500 mt-1">{card.chip}</p>
             </div>
           ))}
         </div>
 
-        <div className="bg-gradient-to-br from-[#111827] to-[#0f172a] border border-cyan-500/20 rounded-3xl p-8">
-          <h2 className="text-2xl font-black flex items-center gap-3 mb-3">
-            <FaShieldAlt className="text-cyan-300" /> Admin Center
-          </h2>
-          <p className="text-gray-300 max-w-3xl">
-            This is the initial admin interface foundation. Next steps are management modules: seller approvals,
-            violations, refund arbitration, dispute handling, and marketplace analytics.
-          </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 bg-[#0f172a]/90 border border-white/10 rounded-3xl p-6">
+            <h2 className="text-xl font-black flex items-center gap-3 mb-2">
+              <FaShieldAlt className="text-cyan-300" /> Governance Priorities
+            </h2>
+            <p className="text-gray-300 mb-5">
+              Focus on verification integrity, dispute handling, and operational bottlenecks.
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between bg-[#020617]/80 border border-white/10 rounded-xl px-4 py-3">
+                <p className="font-bold text-gray-100">Review newly submitted seller KYC documents</p>
+                <FaArrowRight className="text-cyan-300" />
+              </div>
+              <div className="flex items-center justify-between bg-[#020617]/80 border border-white/10 rounded-xl px-4 py-3">
+                <p className="font-bold text-gray-100">Validate pending order disputes and escalation notes</p>
+                <FaArrowRight className="text-cyan-300" />
+              </div>
+              <div className="flex items-center justify-between bg-[#020617]/80 border border-white/10 rounded-xl px-4 py-3">
+                <p className="font-bold text-gray-100">Audit suspicious transactions and repeat violation patterns</p>
+                <FaArrowRight className="text-cyan-300" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-[#0f172a]/90 border border-white/10 rounded-3xl p-6">
+            <h2 className="text-xl font-black mb-4">Action Queue</h2>
+            <div className="space-y-3">
+              {queues.map((queue) => (
+                <div key={queue.title} className="flex items-center justify-between bg-[#020617]/80 border border-white/10 rounded-xl px-4 py-3">
+                  <p className="text-sm text-gray-300">{queue.title}</p>
+                  <span className={`font-black ${queue.color}`}>{queue.count}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              Next page can be the Seller Approval module linked from this queue.
+            </p>
+          </div>
         </div>
       </div>
     </div>
