@@ -70,6 +70,10 @@ const AdminSellerDetailsScreen = () => {
   const [activityPage, setActivityPage] = useState(1);
   const [noteText, setNoteText] = useState('');
   const [noteSeverity, setNoteSeverity] = useState('low');
+  const [activityAction, setActivityAction] = useState('all');
+  const [activitySeverity, setActivitySeverity] = useState('all');
+  const [activityDateFrom, setActivityDateFrom] = useState('');
+  const [activityDateTo, setActivityDateTo] = useState('');
 
   const { data, isLoading, isError, refetch, isFetching } = useAdminGetSellerDetailsQuery(id);
   const [updateSellerStatus, { isLoading: updating }] = useAdminUpdateSellerStatusMutation();
@@ -87,7 +91,15 @@ const AdminSellerDetailsScreen = () => {
     { skip: activeTab !== 'orders' }
   );
   const { data: activityData, isLoading: loadingActivity } = useAdminGetSellerActivityQuery(
-    { sellerId: id, page: activityPage, limit: 10 },
+    {
+      sellerId: id,
+      page: activityPage,
+      limit: 10,
+      action: activityAction,
+      severity: activitySeverity,
+      dateFrom: activityDateFrom,
+      dateTo: activityDateTo,
+    },
     { skip: activeTab !== 'activity' }
   );
 
@@ -114,6 +126,20 @@ const AdminSellerDetailsScreen = () => {
     }
   };
 
+  const applyStatusWithReason = (type) => {
+    const note = window.prompt(`Reason for ${type} (required):`, '');
+    if (note === null) return;
+    if (!String(note).trim()) {
+      toast.error(`Reason for ${type} is required`);
+      return;
+    }
+    const payload = type === 'suspension'
+      ? { isActive: false, note: String(note).trim() }
+      : { isActive: true, note: String(note).trim() };
+    const message = type === 'suspension' ? `${seller.shopName} suspended` : `${seller.shopName} reactivated`;
+    applyStatusUpdate(payload, message);
+  };
+
   const submitNote = async (e) => {
     e.preventDefault();
     const trimmed = String(noteText || '').trim();
@@ -134,6 +160,37 @@ const AdminSellerDetailsScreen = () => {
     } catch (err) {
       toast.error(err?.data?.message || err.error || 'Failed to add note');
     }
+  };
+
+  const exportActivityCsv = () => {
+    if (!activities.length) {
+      toast.error('No activity to export');
+      return;
+    }
+
+    const esc = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Date', 'Action', 'Severity', 'Admin Name', 'Admin Email', 'Note', 'Status Change'],
+      ...activities.map((entry) => [
+        new Date(entry.createdAt).toISOString(),
+        entry.action,
+        entry.metadata?.severity || '',
+        entry.admin?.name || '',
+        entry.admin?.email || '',
+        entry.note || '',
+        entry.metadata?.statusChange || '',
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(esc).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `seller-activity-${id}-page-${activityData?.page || 1}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   const statusText = useMemo(() => {
@@ -221,7 +278,7 @@ const AdminSellerDetailsScreen = () => {
                       <button
                         type="button"
                         disabled={updating}
-                        onClick={() => applyStatusUpdate({ isActive: false }, `${seller.shopName} suspended`)}
+                        onClick={() => applyStatusWithReason('suspension')}
                         className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white text-sm font-black inline-flex items-center gap-2"
                       >
                         <FaPowerOff /> Suspend
@@ -230,7 +287,7 @@ const AdminSellerDetailsScreen = () => {
                       <button
                         type="button"
                         disabled={updating}
-                        onClick={() => applyStatusUpdate({ isActive: true }, `${seller.shopName} reactivated`)}
+                        onClick={() => applyStatusWithReason('reactivation')}
                         className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-[#04111f] text-sm font-black inline-flex items-center gap-2"
                       >
                         <FaShieldAlt /> Reactivate
@@ -623,6 +680,58 @@ const AdminSellerDetailsScreen = () => {
 
                 {activeTab === 'activity' && (
                   <div className="space-y-4">
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row gap-3">
+                      <select
+                        value={activityAction}
+                        onChange={(e) => {
+                          setActivityPage(1);
+                          setActivityAction(e.target.value);
+                        }}
+                        className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      >
+                        <option value="all" className="bg-[#0b1220]">Action: All</option>
+                        <option value="STATUS_UPDATE" className="bg-[#0b1220]">Action: Status Update</option>
+                        <option value="NOTE" className="bg-[#0b1220]">Action: Note</option>
+                      </select>
+                      <select
+                        value={activitySeverity}
+                        onChange={(e) => {
+                          setActivityPage(1);
+                          setActivitySeverity(e.target.value);
+                        }}
+                        className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      >
+                        <option value="all" className="bg-[#0b1220]">Severity: All</option>
+                        <option value="low" className="bg-[#0b1220]">Severity: Low</option>
+                        <option value="medium" className="bg-[#0b1220]">Severity: Medium</option>
+                        <option value="high" className="bg-[#0b1220]">Severity: High</option>
+                      </select>
+                      <input
+                        type="date"
+                        value={activityDateFrom}
+                        onChange={(e) => {
+                          setActivityPage(1);
+                          setActivityDateFrom(e.target.value);
+                        }}
+                        className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      />
+                      <input
+                        type="date"
+                        value={activityDateTo}
+                        onChange={(e) => {
+                          setActivityPage(1);
+                          setActivityDateTo(e.target.value);
+                        }}
+                        className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={exportActivityCsv}
+                        className="px-4 py-3 rounded-xl border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] text-gray-200 font-black"
+                      >
+                        Export CSV
+                      </button>
+                    </div>
                     <form
                       onSubmit={submitNote}
                       className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 space-y-3"
