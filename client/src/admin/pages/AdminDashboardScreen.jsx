@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   FaArrowRight,
   FaChartLine,
@@ -111,8 +111,8 @@ const AdminDashboardScreen = () => {
   ];
 
   const navItems = [
-    { label: 'Dashboard', icon: FaHome, active: true },
-    { label: 'Seller Review', icon: FaUserCheck, active: false },
+    { label: 'Dashboard', icon: FaHome, active: true, to: '/admin/dashboard' },
+    { label: 'Seller Review', icon: FaUserCheck, active: false, to: '/admin/sellers' },
     { label: 'User Management', icon: FaUsers, active: false },
     { label: 'Orders & Disputes', icon: FaGavel, active: false },
     { label: 'Finance', icon: FaMoneyCheckAlt, active: false },
@@ -124,8 +124,8 @@ const AdminDashboardScreen = () => {
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#081122]/95 backdrop-blur">
         <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <img src={logo} alt="Gulit" className="w-7 h-7 object-contain" />
+            <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <img src={logo} alt="Gulit" className="w-12 h-12 object-contain" />
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300 font-bold">Gulit Admin</p>
@@ -151,12 +151,15 @@ const AdminDashboardScreen = () => {
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
           <aside className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 h-fit lg:sticky lg:top-24">
+            <div className="flex items-center justify-center mb-4 py-2">
+              <img src={logo} alt="Gulit" className="w-40 h-40 object-contain" />
+            </div>
             <p className="text-xs uppercase tracking-[0.16em] text-cyan-300 font-bold mb-3 px-2">Navigation</p>
             <nav className="space-y-1.5">
               {navItems.map((item) => (
-                <button
+                <Link
                   key={item.label}
-                  type="button"
+                  to={item.to || '#'}
                   className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-colors ${
                     item.active
                       ? 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-200'
@@ -165,7 +168,7 @@ const AdminDashboardScreen = () => {
                 >
                   <item.icon />
                   <span className="font-semibold">{item.label}</span>
-                </button>
+                </Link>
               ))}
             </nav>
           </aside>

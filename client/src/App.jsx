@@ -49,6 +49,7 @@ import AdminLoginScreen from './admin/pages/AdminLoginScreen';
 import AdminForgotPasswordScreen from './admin/pages/AdminForgotPasswordScreen';
 import AdminResetPasswordScreen from './admin/pages/AdminResetPasswordScreen';
 import AdminDashboardScreen from './admin/pages/AdminDashboardScreen';
+import AdminSellerReviewScreen from './admin/pages/AdminSellerReviewScreen';
 import AdminRouteGuard from './admin/components/AdminRoute';
 
 
@@ -121,6 +122,7 @@ const App = () => {
         <Route path="/admin/reset-password/:token" element={<AdminResetPasswordScreen />} />
         <Route element={<AdminRouteGuard />}>
           <Route path="/admin/dashboard" element={<AdminDashboardScreen />} />
+          <Route path="/admin/sellers" element={<AdminSellerReviewScreen />} />
         </Route>
 
       </Routes>

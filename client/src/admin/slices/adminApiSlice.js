@@ -44,7 +44,23 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       keepUnusedDataFor: 10,
     }),
+    adminGetSellers: builder.query({
+      query: ({ status = 'all', keyword = '' } = {}) => ({
+        url: `/api/admin/sellers?status=${encodeURIComponent(status)}&keyword=${encodeURIComponent(keyword)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSeller'],
+    }),
+    adminUpdateSellerStatus: builder.mutation({
+      query: ({ sellerId, ...body }) => ({
+        url: `/api/admin/sellers/${sellerId}/status`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['AdminSeller', 'Order'],
+    }),
   }),
+  overrideExisting: false,
 });
 
 export const {
@@ -54,4 +70,6 @@ export const {
   useAdminGoogleLoginMutation,
   useAdminMeQuery,
   useAdminStatsQuery,
+  useAdminGetSellersQuery,
+  useAdminUpdateSellerStatusMutation,
 } = adminApiSlice;
