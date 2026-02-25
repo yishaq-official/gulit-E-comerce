@@ -21,6 +21,8 @@ import AdminSidebar from '../components/AdminSidebar';
 import { adminLogout } from '../slices/adminAuthSlice';
 import {
   useAdminGetSellerDetailsQuery,
+  useAdminGetSellerActivityQuery,
+  useAdminAddSellerNoteMutation,
   useAdminGetSellerOrdersQuery,
   useAdminGetSellerProductsQuery,
   useAdminGetSellerTransactionsQuery,
@@ -34,6 +36,7 @@ const tabs = [
   { key: 'transactions', label: 'Transactions' },
   { key: 'products', label: 'Products' },
   { key: 'orders', label: 'Orders' },
+  { key: 'activity', label: 'Activity' },
 ];
 
 const fileUrl = (path) => {
@@ -64,9 +67,13 @@ const AdminSellerDetailsScreen = () => {
   const [ordersKeyword, setOrdersKeyword] = useState('');
   const [ordersStatus, setOrdersStatus] = useState('all');
   const [ordersRisk, setOrdersRisk] = useState('all');
+  const [activityPage, setActivityPage] = useState(1);
+  const [noteText, setNoteText] = useState('');
+  const [noteSeverity, setNoteSeverity] = useState('low');
 
   const { data, isLoading, isError, refetch, isFetching } = useAdminGetSellerDetailsQuery(id);
   const [updateSellerStatus, { isLoading: updating }] = useAdminUpdateSellerStatusMutation();
+  const [addSellerNote, { isLoading: addingNote }] = useAdminAddSellerNoteMutation();
   const { data: txData, isLoading: loadingTransactions } = useAdminGetSellerTransactionsQuery(
     { sellerId: id, page: transactionsPage, limit: 10 },
     { skip: activeTab !== 'transactions' }
@@ -79,12 +86,17 @@ const AdminSellerDetailsScreen = () => {
     { sellerId: id, page: ordersPage, limit: 10, keyword: ordersKeyword, status: ordersStatus, risk: ordersRisk },
     { skip: activeTab !== 'orders' }
   );
+  const { data: activityData, isLoading: loadingActivity } = useAdminGetSellerActivityQuery(
+    { sellerId: id, page: activityPage, limit: 10 },
+    { skip: activeTab !== 'activity' }
+  );
 
   const seller = data?.seller;
   const summary = data?.summary || {};
   const products = productData?.products || [];
   const orders = orderData?.orders || [];
   const transactions = txData?.transactions || [];
+  const activities = activityData?.activities || [];
   const riskSummary = summary?.riskSummary || {};
 
   const logoutHandler = () => {
@@ -99,6 +111,28 @@ const AdminSellerDetailsScreen = () => {
       refetch();
     } catch (err) {
       toast.error(err?.data?.message || err.error || 'Failed to update seller status');
+    }
+  };
+
+  const submitNote = async (e) => {
+    e.preventDefault();
+    const trimmed = String(noteText || '').trim();
+    if (!trimmed) {
+      toast.error('Note is required');
+      return;
+    }
+
+    try {
+      await addSellerNote({
+        sellerId: id,
+        note: trimmed,
+        severity: noteSeverity,
+      }).unwrap();
+      toast.success('Admin note added');
+      setNoteText('');
+      setActivityPage(1);
+    } catch (err) {
+      toast.error(err?.data?.message || err.error || 'Failed to add note');
     }
   };
 
@@ -261,6 +295,7 @@ const AdminSellerDetailsScreen = () => {
                         if (tab.key === 'transactions') setTransactionsPage(1);
                         if (tab.key === 'products') setProductsPage(1);
                         if (tab.key === 'orders') setOrdersPage(1);
+                        if (tab.key === 'activity') setActivityPage(1);
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-bold border ${
                         activeTab === tab.key
@@ -582,6 +617,101 @@ const AdminSellerDetailsScreen = () => {
                         </button>
                       </div>
                     </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'activity' && (
+                  <div className="space-y-4">
+                    <form
+                      onSubmit={submitNote}
+                      className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 space-y-3"
+                    >
+                      <p className="font-black">Add Admin Note</p>
+                      <textarea
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="Write moderation note, warning, or follow-up action..."
+                        className="w-full min-h-28 px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                      />
+                      <div className="flex flex-wrap gap-3">
+                        <select
+                          value={noteSeverity}
+                          onChange={(e) => setNoteSeverity(e.target.value)}
+                          className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
+                        >
+                          <option value="low" className="bg-[#0b1220]">Severity: Low</option>
+                          <option value="medium" className="bg-[#0b1220]">Severity: Medium</option>
+                          <option value="high" className="bg-[#0b1220]">Severity: High</option>
+                        </select>
+                        <button
+                          type="submit"
+                          disabled={addingNote}
+                          className="px-4 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black disabled:opacity-70"
+                        >
+                          {addingNote ? 'Saving...' : 'Save Note'}
+                        </button>
+                      </div>
+                    </form>
+
+                    <div className="bg-[#0f172a] border border-white/10 rounded-2xl overflow-hidden">
+                      <div className="px-4 py-3 border-b border-white/10 font-black">Activity Timeline</div>
+                      {loadingActivity ? <div className="px-4 py-4 text-gray-400 text-sm">Loading activity...</div> : null}
+                      <div className="divide-y divide-white/5">
+                        {activities.length === 0 ? (
+                          <div className="px-4 py-6 text-center text-gray-400">No activity yet.</div>
+                        ) : (
+                          activities.map((entry) => (
+                            <div key={entry._id} className="px-4 py-4">
+                              <div className="flex flex-wrap items-center gap-2 mb-2">
+                                <span className="px-2 py-1 rounded-full text-xs font-black border border-cyan-500/30 bg-cyan-500/10 text-cyan-200">
+                                  {entry.action}
+                                </span>
+                                {entry.metadata?.severity ? (
+                                  <span className={`px-2 py-1 rounded-full text-xs font-black border ${
+                                    entry.metadata.severity === 'high'
+                                      ? 'border-red-500/40 bg-red-500/10 text-red-200'
+                                      : entry.metadata.severity === 'medium'
+                                      ? 'border-amber-500/40 bg-amber-500/10 text-amber-200'
+                                      : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                                  }`}>
+                                    {entry.metadata.severity.toUpperCase()}
+                                  </span>
+                                ) : null}
+                                <span className="text-xs text-gray-500">{new Date(entry.createdAt).toLocaleString()}</span>
+                              </div>
+                              <p className="text-sm text-gray-300">{entry.note || 'No note provided'}</p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                By: {entry.admin?.name || 'Admin'} ({entry.admin?.email || '-'})
+                              </p>
+                              {entry.metadata?.statusChange ? (
+                                <p className="text-xs text-gray-500 mt-1">Change: {entry.metadata.statusChange}</p>
+                              ) : null}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
+                        <p className="text-xs text-gray-500">Page {activityData?.page || 1} of {activityData?.pages || 1}</p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={!activityData?.hasPrevPage}
+                            onClick={() => setActivityPage((prev) => Math.max(prev - 1, 1))}
+                            className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                          >
+                            <FaChevronLeft />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!activityData?.hasNextPage}
+                            onClick={() => setActivityPage((prev) => prev + 1)}
+                            className="px-3 py-1.5 rounded-lg border border-white/15 text-sm disabled:opacity-40"
+                          >
+                            <FaChevronRight />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}

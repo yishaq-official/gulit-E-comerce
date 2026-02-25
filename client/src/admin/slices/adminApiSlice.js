@@ -104,6 +104,21 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 5,
       providesTags: ['AdminSeller'],
     }),
+    adminGetSellerActivity: builder.query({
+      query: ({ sellerId, page = 1, limit = 10 } = {}) => ({
+        url: `/api/admin/sellers/${sellerId}/activity?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSeller'],
+    }),
+    adminAddSellerNote: builder.mutation({
+      query: ({ sellerId, note, severity }) => ({
+        url: `/api/admin/sellers/${sellerId}/notes`,
+        method: 'POST',
+        body: { note, severity },
+      }),
+      invalidatesTags: ['AdminSeller'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -121,4 +136,6 @@ export const {
   useAdminGetSellerTransactionsQuery,
   useAdminGetSellerProductsQuery,
   useAdminGetSellerOrdersQuery,
+  useAdminGetSellerActivityQuery,
+  useAdminAddSellerNoteMutation,
 } = adminApiSlice;

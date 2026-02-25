@@ -2,7 +2,18 @@ const Seller = require('../models/sellerModel');
 const Product = require('../models/productModel');
 const Order = require('../models/orderModel');
 const SellerWalletTransaction = require('../models/sellerWalletTransactionModel');
+const AdminSellerActivity = require('../models/adminSellerActivityModel');
 const mongoose = require('mongoose');
+
+const logSellerActivity = async ({ sellerId, adminId, action, note = '', metadata = {} }) => {
+  await AdminSellerActivity.create({
+    seller: sellerId,
+    admin: adminId,
+    action,
+    note,
+    metadata,
+  });
+};
 
 // @desc    Get sellers for admin review
 // @route   GET /api/admin/sellers
@@ -171,12 +182,17 @@ const getSellersForAdmin = async (req, res) => {
 // @access  Private/Admin
 const updateSellerStatusByAdmin = async (req, res) => {
   const { id } = req.params;
-  const { isApproved, isActive } = req.body;
+  const { isApproved, isActive, note = '' } = req.body;
 
   const seller = await Seller.findById(id);
   if (!seller) {
     return res.status(404).json({ message: 'Seller not found' });
   }
+
+  const previous = {
+    isApproved: seller.isApproved,
+    isActive: seller.isActive,
+  };
 
   if (typeof isApproved === 'boolean') {
     seller.isApproved = isApproved;
@@ -187,6 +203,31 @@ const updateSellerStatusByAdmin = async (req, res) => {
 
   const updated = await seller.save();
 
+  const statusChangeParts = [];
+  if (previous.isApproved !== updated.isApproved) {
+    statusChangeParts.push(`isApproved: ${previous.isApproved} -> ${updated.isApproved}`);
+  }
+  if (previous.isActive !== updated.isActive) {
+    statusChangeParts.push(`isActive: ${previous.isActive} -> ${updated.isActive}`);
+  }
+
+  if (statusChangeParts.length > 0 || note) {
+    await logSellerActivity({
+      sellerId: updated._id,
+      adminId: req.user._id,
+      action: 'STATUS_UPDATE',
+      note,
+      metadata: {
+        previous,
+        current: {
+          isApproved: updated.isApproved,
+          isActive: updated.isActive,
+        },
+        statusChange: statusChangeParts.join(', '),
+      },
+    });
+  }
+
   return res.json({
     _id: updated._id,
     name: updated.name,
@@ -195,6 +236,84 @@ const updateSellerStatusByAdmin = async (req, res) => {
     isApproved: updated.isApproved,
     isActive: updated.isActive,
     message: 'Seller status updated',
+  });
+};
+
+// @desc    Add admin note for seller
+// @route   POST /api/admin/sellers/:id/notes
+// @access  Private/Admin
+const addSellerAdminNote = async (req, res) => {
+  const { id } = req.params;
+  const { note, severity = 'low' } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid seller id' });
+  }
+  if (!String(note || '').trim()) {
+    return res.status(400).json({ message: 'Note is required' });
+  }
+
+  const seller = await Seller.findById(id).select('_id');
+  if (!seller) {
+    return res.status(404).json({ message: 'Seller not found' });
+  }
+
+  const normalizedSeverity = ['low', 'medium', 'high'].includes(String(severity).toLowerCase())
+    ? String(severity).toLowerCase()
+    : 'low';
+
+  await logSellerActivity({
+    sellerId: seller._id,
+    adminId: req.user._id,
+    action: 'NOTE',
+    note: String(note).trim(),
+    metadata: {
+      severity: normalizedSeverity,
+    },
+  });
+
+  return res.status(201).json({ message: 'Admin note saved' });
+};
+
+// @desc    Get seller activity timeline for admin
+// @route   GET /api/admin/sellers/:id/activity
+// @access  Private/Admin
+const getSellerActivityForAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid seller id' });
+  }
+
+  const seller = await Seller.findById(id).select('_id');
+  if (!seller) {
+    return res.status(404).json({ message: 'Seller not found' });
+  }
+
+  const normalizedPage = Math.max(Number(page) || 1, 1);
+  const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
+  const skip = (normalizedPage - 1) * normalizedLimit;
+
+  const [activities, total] = await Promise.all([
+    AdminSellerActivity.find({ seller: seller._id })
+      .populate('admin', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(normalizedLimit),
+    AdminSellerActivity.countDocuments({ seller: seller._id }),
+  ]);
+
+  const pages = Math.max(Math.ceil(total / normalizedLimit), 1);
+
+  return res.json({
+    activities,
+    page: normalizedPage,
+    pages,
+    total,
+    limit: normalizedLimit,
+    hasPrevPage: normalizedPage > 1,
+    hasNextPage: normalizedPage < pages,
   });
 };
 
@@ -656,5 +775,7 @@ module.exports = {
   getSellerTransactionsForAdmin,
   getSellerProductsForAdmin,
   getSellerOrdersForAdmin,
+  addSellerAdminNote,
+  getSellerActivityForAdmin,
   updateSellerStatusByAdmin,
 };
