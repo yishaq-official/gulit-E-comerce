@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import SellerDashboardHeader from './SellerDashboardHeader';
 import SellerFooter from './SellerFooter';
+import PlatformUpdatesBanner from '../PlatformUpdatesBanner';
 
 const SellerDashboardLayout = () => {
   return (
@@ -10,6 +11,7 @@ const SellerDashboardLayout = () => {
       
       {/* pt-28 gives breathing room below the fixed header for the workspace */}
       <main className="flex-grow pt-28 pb-12 px-6 container mx-auto max-w-7xl"> 
+        <PlatformUpdatesBanner audience="seller" />
         <Outlet />
       </main>
       

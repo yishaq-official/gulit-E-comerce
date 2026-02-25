@@ -47,6 +47,7 @@ const SellerHeader = () => {
           <div className="hidden md:flex items-center gap-6 font-medium">
             <Link to="/seller/help-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
             <Link to="/seller/rules-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+            {sellerInfo?.isApproved ? <Link to="/seller/inbox" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Inbox</Link> : null}
           </div>
         </div>
 
@@ -115,6 +116,7 @@ const SellerHeader = () => {
         <div className="md:hidden bg-[#1e293b] border-b border-gray-800 p-4 flex flex-col gap-4 shadow-xl transition-all duration-300">
           <Link to="/seller/help-center" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Help Center</Link>
           <Link to="/seller/rules-center" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+          {sellerInfo?.isApproved ? <Link to="/seller/inbox" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Inbox</Link> : null}
           <hr className="border-gray-700" />
           
           {sellerInfo ? (

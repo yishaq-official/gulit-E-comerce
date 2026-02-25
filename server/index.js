@@ -15,6 +15,8 @@ const adminUserRoutes = require('./routes/adminUserRoutes');
 const adminOrderRoutes = require('./routes/adminOrderRoutes');
 const adminFinanceRoutes = require('./routes/adminFinanceRoutes');
 const adminSupportRoutes = require('./routes/adminSupportRoutes');
+const adminSystemRoutes = require('./routes/adminSystemRoutes');
+const platformUpdateRoutes = require('./routes/platformUpdateRoutes');
 
 
 dotenv.config();
@@ -45,6 +47,8 @@ app.use('/api/admin/users', adminUserRoutes);
 app.use('/api/admin/orders', adminOrderRoutes);
 app.use('/api/admin/finance', adminFinanceRoutes);
 app.use('/api/admin/support', adminSupportRoutes);
+app.use('/api/admin/system', adminSystemRoutes);
+app.use('/api/platform', platformUpdateRoutes);
 
 
 

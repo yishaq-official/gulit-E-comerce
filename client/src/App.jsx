@@ -56,6 +56,7 @@ import AdminUserManagementScreen from './admin/pages/AdminUserManagementScreen';
 import AdminOrdersDisputesScreen from './admin/pages/AdminOrdersDisputesScreen';
 import AdminFinanceScreen from './admin/pages/AdminFinanceScreen';
 import AdminSupportDeskScreen from './admin/pages/AdminSupportDeskScreen';
+import AdminSystemSettingsScreen from './admin/pages/AdminSystemSettingsScreen';
 import AdminRouteGuard from './admin/components/AdminRoute';
 
 
@@ -135,6 +136,7 @@ const App = () => {
           <Route path="/admin/disputes" element={<AdminOrdersDisputesScreen />} />
           <Route path="/admin/finance" element={<AdminFinanceScreen />} />
           <Route path="/admin/support" element={<AdminSupportDeskScreen />} />
+          <Route path="/admin/settings" element={<AdminSystemSettingsScreen />} />
         </Route>
 
       </Routes>

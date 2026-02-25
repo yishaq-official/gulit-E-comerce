@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
+  FaCog,
   FaGavel,
   FaHome,
   FaLifeRing,
@@ -17,6 +18,7 @@ const navItems = [
   { key: 'orders-disputes', label: 'Orders & Disputes', icon: FaGavel, to: '/admin/disputes' },
   { key: 'finance', label: 'Finance', icon: FaMoneyCheckAlt, to: '/admin/finance' },
   { key: 'support', label: 'Support Inbox', icon: FaLifeRing, to: '/admin/support' },
+  { key: 'system-settings', label: 'System Settings', icon: FaCog, to: '/admin/settings' },
 ];
 
 const AdminSidebar = ({ activeKey }) => {

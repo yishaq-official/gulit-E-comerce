@@ -249,6 +249,31 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['AdminSupport'],
     }),
+    adminGetPlatformUpdates: builder.query({
+      query: ({ audience = 'all', status = 'all', page = 1, limit = 20 } = {}) => ({
+        url: `/api/admin/system/updates?audience=${encodeURIComponent(audience)}&status=${encodeURIComponent(
+          status
+        )}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminSupport'],
+    }),
+    adminCreatePlatformUpdate: builder.mutation({
+      query: (data) => ({
+        url: '/api/admin/system/updates',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['AdminSupport'],
+    }),
+    adminUpdatePlatformUpdate: builder.mutation({
+      query: ({ updateId, ...body }) => ({
+        url: `/api/admin/system/updates/${updateId}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['AdminSupport'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -279,4 +304,7 @@ export const {
   useAdminReplySupportThreadMutation,
   useAdminUpdateSupportThreadStatusMutation,
   useAdminSendSupportMessageMutation,
+  useAdminGetPlatformUpdatesQuery,
+  useAdminCreatePlatformUpdateMutation,
+  useAdminUpdatePlatformUpdateMutation,
 } = adminApiSlice;
