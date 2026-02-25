@@ -9,11 +9,10 @@ import {
   FaSignOutAlt,
   FaSync,
 } from 'react-icons/fa';
-import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
 import AdminSidebar from '../components/AdminSidebar';
 import { adminLogout } from '../slices/adminAuthSlice';
-import { useAdminGetOrdersQuery, useAdminUpdateOrderDisputeMutation } from '../slices/adminApiSlice';
+import { useAdminGetOrdersQuery } from '../slices/adminApiSlice';
 
 const statusBadge = (riskLevel) => {
   if (riskLevel === 'high') return 'border-red-500/40 bg-red-500/10 text-red-200';
@@ -52,7 +51,6 @@ const AdminOrdersDisputesScreen = () => {
     dispute,
     risk,
   });
-  const [updateDispute, { isLoading: updatingDispute }] = useAdminUpdateOrderDisputeMutation();
 
   const orders = data?.orders || [];
   const pages = data?.pages || 1;
@@ -75,20 +73,6 @@ const AdminOrdersDisputesScreen = () => {
     e.preventDefault();
     setPage(1);
     setKeyword(searchInput.trim());
-  };
-
-  const handleDisputeUpdate = async (orderId, nextStatus) => {
-    const note = window.prompt(`Add note for status "${nextStatus}" (optional):`, '') ?? '';
-    try {
-      await updateDispute({
-        orderId,
-        disputeStatus: nextStatus,
-        disputeNote: note.trim(),
-      }).unwrap();
-      toast.success(`Order ${orderId} dispute set to ${nextStatus}`);
-    } catch (err) {
-      toast.error(err?.data?.message || err.error || 'Failed to update dispute');
-    }
   };
 
   return (
@@ -122,7 +106,7 @@ const AdminOrdersDisputesScreen = () => {
               <h1 className="text-2xl sm:text-3xl font-black flex items-center gap-3">
                 <FaGavel className="text-cyan-300" /> Orders & Disputes Queue
               </h1>
-              <p className="text-gray-300 mt-2">Monitor risky orders, open disputes, and drive resolution decisions.</p>
+              <p className="text-gray-300 mt-2">Monitor order-level risk and compare buyer and seller performance in one queue.</p>
             </div>
 
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
@@ -152,7 +136,7 @@ const AdminOrdersDisputesScreen = () => {
                     type="text"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Search order id / buyer..."
+                    placeholder="Search order id / buyer / seller..."
                     className="w-full pl-10 pr-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -205,17 +189,17 @@ const AdminOrdersDisputesScreen = () => {
             {!isLoading && !isError && (
               <div className="bg-[#0f172a] border border-white/10 rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1250px]">
+                  <table className="w-full min-w-[1320px]">
                     <thead className="bg-[#0a1224] border-b border-white/10">
                       <tr className="text-left text-xs uppercase tracking-wider text-gray-400">
                         <th className="px-4 py-3">Order</th>
                         <th className="px-4 py-3">Buyer</th>
+                        <th className="px-4 py-3">Seller</th>
                         <th className="px-4 py-3">Amount</th>
                         <th className="px-4 py-3">Payment</th>
                         <th className="px-4 py-3">Delivery</th>
                         <th className="px-4 py-3">Risk</th>
                         <th className="px-4 py-3">Dispute</th>
-                        <th className="px-4 py-3">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -232,6 +216,19 @@ const AdminOrdersDisputesScreen = () => {
                               <p>{order.buyerName || '-'}</p>
                               <p className="text-xs text-gray-500">{order.buyerEmail || '-'}</p>
                             </td>
+                            <td className="px-4 py-4 text-sm text-gray-300">
+                              {Array.isArray(order.sellerNames) && order.sellerNames.length > 0 ? (
+                                <>
+                                  <p className="font-semibold text-gray-200">{order.sellerNames[0]}</p>
+                                  {order.sellerNames[1] ? <p className="text-xs text-gray-500">+{order.sellerNames.length - 1} more</p> : null}
+                                  {Array.isArray(order.sellerEmails) && order.sellerEmails[0] ? (
+                                    <p className="text-xs text-gray-500">{order.sellerEmails[0]}</p>
+                                  ) : null}
+                                </>
+                              ) : (
+                                <p>-</p>
+                              )}
+                            </td>
                             <td className="px-4 py-4 text-sm font-black text-emerald-200">{currency(order.totalPrice)}</td>
                             <td className="px-4 py-4 text-sm">{order.isPaid ? <span className="text-emerald-200">Paid</span> : <span className="text-amber-200">Unpaid</span>}</td>
                             <td className="px-4 py-4 text-sm">{order.isDelivered ? <span className="text-cyan-200">Delivered</span> : <span className="text-orange-200">Pending</span>}</td>
@@ -245,34 +242,6 @@ const AdminOrdersDisputesScreen = () => {
                                 {String(order.disputeStatus || 'none').toUpperCase()}
                               </span>
                               {order.disputeNote ? <p className="text-xs text-gray-500 mt-1 line-clamp-2">{order.disputeNote}</p> : null}
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex flex-wrap gap-2">
-                                <button
-                                  type="button"
-                                  disabled={updatingDispute}
-                                  onClick={() => handleDisputeUpdate(order._id, 'open')}
-                                  className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#23190a] text-xs font-black"
-                                >
-                                  Open
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={updatingDispute}
-                                  onClick={() => handleDisputeUpdate(order._id, 'in_review')}
-                                  className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-[#04111f] text-xs font-black"
-                                >
-                                  Review
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={updatingDispute}
-                                  onClick={() => handleDisputeUpdate(order._id, 'resolved')}
-                                  className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-[#04111f] text-xs font-black"
-                                >
-                                  Resolve
-                                </button>
-                              </div>
                             </td>
                           </tr>
                         ))

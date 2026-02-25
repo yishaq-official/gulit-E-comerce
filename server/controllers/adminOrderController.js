@@ -47,6 +47,42 @@ const getOrdersForAdmin = async (req, res) => {
         orderIdStr: { $toString: '$_id' },
       },
     },
+    {
+      $lookup: {
+        from: 'sellers',
+        localField: 'orderItems.seller',
+        foreignField: '_id',
+        as: 'sellerDocs',
+      },
+    },
+    {
+      $addFields: {
+        sellerNames: {
+          $setUnion: [
+            {
+              $map: {
+                input: '$sellerDocs',
+                as: 'seller',
+                in: '$$seller.shopName',
+              },
+            },
+            [],
+          ],
+        },
+        sellerEmails: {
+          $setUnion: [
+            {
+              $map: {
+                input: '$sellerDocs',
+                as: 'seller',
+                in: '$$seller.email',
+              },
+            },
+            [],
+          ],
+        },
+      },
+    },
   ];
 
   if (payment === 'paid') pipeline.push({ $match: { isPaid: true } });
@@ -71,7 +107,7 @@ const getOrdersForAdmin = async (req, res) => {
     const regex = new RegExp(trimmedKeyword, 'i');
     pipeline.push({
       $match: {
-        $or: [{ orderIdStr: regex }, { buyerName: regex }, { buyerEmail: regex }],
+        $or: [{ orderIdStr: regex }, { buyerName: regex }, { buyerEmail: regex }, { sellerNames: regex }, { sellerEmails: regex }],
       },
     });
   }
@@ -102,6 +138,7 @@ const getOrdersForAdmin = async (req, res) => {
 
     return {
       ...order,
+      sellerCount: Array.isArray(order.sellerNames) ? order.sellerNames.length : 0,
       daysSincePaid,
       daysSinceCreated,
       riskLevel,
