@@ -6,24 +6,23 @@ import {
   FaChevronRight,
   FaSearch,
   FaSignOutAlt,
+  FaStore,
   FaSync,
-  FaUserShield,
-  FaUsers,
+  FaTachometerAlt,
 } from 'react-icons/fa';
-import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
 import AdminSidebar from '../components/AdminSidebar';
 import { adminLogout } from '../slices/adminAuthSlice';
-import { useAdminGetUsersQuery, useAdminUpdateUserRoleMutation } from '../slices/adminApiSlice';
+import { useAdminGetSellersQuery } from '../slices/adminApiSlice';
 
 const sortOptions = [
   { value: 'createdAt_desc', label: 'Newest' },
-  { value: 'createdAt_asc', label: 'Oldest' },
-  { value: 'name_asc', label: 'Name A-Z' },
-  { value: 'email_asc', label: 'Email A-Z' },
-  { value: 'role_asc', label: 'Role A-Z' },
-  { value: 'paidOrders_desc', label: 'Top Orders' },
-  { value: 'totalSpent_desc', label: 'Top Spend' },
+  { value: 'revenue_desc', label: 'Top Revenue' },
+  { value: 'paidOrders_desc', label: 'Most Paid Orders' },
+  { value: 'deliveredOrders_desc', label: 'Most Delivered' },
+  { value: 'lateOrders_desc', label: 'Most Late Orders' },
+  { value: 'deliveryRate_desc', label: 'Best Delivery Rate' },
+  { value: 'shopName_asc', label: 'Shop A-Z' },
 ];
 
 const currency = (value) =>
@@ -33,41 +32,50 @@ const currency = (value) =>
     maximumFractionDigits: 2,
   }).format(Number(value || 0));
 
+const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
+
 const AdminUserManagementScreen = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [searchInput, setSearchInput] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [role, setRole] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [sortValue, setSortValue] = useState('deliveryRate_desc');
   const [page, setPage] = useState(1);
-  const [sortValue, setSortValue] = useState('createdAt_desc');
   const [limit] = useState(10);
 
   const [sortBy, sortOrder] = sortValue.split('_');
 
-  const { data, isLoading, isError, isFetching, refetch } = useAdminGetUsersQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useAdminGetSellersQuery({
+    status,
     keyword,
-    role,
     sortBy,
     sortOrder,
     page,
     limit,
   });
 
-  const users = data?.users || [];
+  const sellers = data?.sellers || [];
   const pages = data?.pages || 1;
   const total = data?.total || 0;
 
-  const [updateUserRole, { isLoading: updatingRole }] = useAdminUpdateUserRoleMutation();
-
-  const roleCounts = useMemo(() => {
-    const counts = { all: users.length, buyer: 0, admin: 0, seller: 0 };
-    users.forEach((user) => {
-      counts[user.role] = (counts[user.role] || 0) + 1;
+  const perf = useMemo(() => {
+    const summary = {
+      paid: 0,
+      delivered: 0,
+      late: 0,
+      revenue: 0,
+    };
+    sellers.forEach((seller) => {
+      summary.paid += Number(seller.paidOrdersCount || 0);
+      summary.delivered += Number(seller.deliveredOrdersCount || 0);
+      summary.late += Number(seller.lateOrdersCount || 0);
+      summary.revenue += Number(seller.totalRevenue || 0);
     });
-    return counts;
-  }, [users]);
+    summary.deliveryRate = summary.paid > 0 ? (summary.delivered / summary.paid) * 100 : 0;
+    return summary;
+  }, [sellers]);
 
   const logoutHandler = () => {
     dispatch(adminLogout());
@@ -80,15 +88,6 @@ const AdminUserManagementScreen = () => {
     setKeyword(searchInput.trim());
   };
 
-  const updateRole = async (userId, nextRole) => {
-    try {
-      await updateUserRole({ userId, role: nextRole }).unwrap();
-      toast.success(`Role updated to ${nextRole}`);
-    } catch (err) {
-      toast.error(err?.data?.message || err.error || 'Failed to update role');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#070c18] text-white flex flex-col">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#081122]/95 backdrop-blur">
@@ -99,7 +98,7 @@ const AdminUserManagementScreen = () => {
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300 font-bold">Gulit Admin</p>
-              <p className="text-sm font-bold text-gray-100">User Management</p>
+              <p className="text-sm font-bold text-gray-100">Seller Performance</p>
             </div>
           </div>
           <button
@@ -118,30 +117,32 @@ const AdminUserManagementScreen = () => {
           <section className="space-y-6">
             <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-[#0f172a]/95 via-[#111827]/95 to-[#0b1324]/95 p-6">
               <h1 className="text-2xl sm:text-3xl font-black flex items-center gap-3">
-                <FaUsers className="text-cyan-300" /> User Accounts
+                <FaStore className="text-cyan-300" /> Seller Performance Table
               </h1>
-              <p className="text-gray-300 mt-2">Manage buyer/admin user accounts with role filters and action controls.</p>
+              <p className="text-gray-300 mt-2">Track operational quality by seller. Click any row to inspect full seller details.</p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {['all', 'buyer', 'admin', 'seller'].map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => {
-                    setPage(1);
-                    setRole(r);
-                  }}
-                  className={`rounded-xl border px-4 py-3 text-left ${
-                    role === r
-                      ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200'
-                      : 'border-white/10 bg-[#0f172a] text-gray-300 hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <p className="text-sm font-bold capitalize">{r}</p>
-                  <p className="text-xl font-black mt-1">{roleCounts[r] || 0}</p>
-                </button>
-              ))}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">
+                <p className="text-xs text-cyan-200 uppercase tracking-wide">Paid Orders</p>
+                <p className="text-2xl font-black text-cyan-100 mt-1">{perf.paid}</p>
+              </div>
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                <p className="text-xs text-emerald-200 uppercase tracking-wide">Delivered</p>
+                <p className="text-2xl font-black text-emerald-100 mt-1">{perf.delivered}</p>
+              </div>
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+                <p className="text-xs text-red-200 uppercase tracking-wide">Late Orders</p>
+                <p className="text-2xl font-black text-red-100 mt-1">{perf.late}</p>
+              </div>
+              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
+                <p className="text-xs text-violet-200 uppercase tracking-wide">Delivery Rate</p>
+                <p className="text-2xl font-black text-violet-100 mt-1">{formatPercent(perf.deliveryRate)}</p>
+              </div>
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                <p className="text-xs text-amber-200 uppercase tracking-wide">Revenue</p>
+                <p className="text-2xl font-black text-amber-100 mt-1">{currency(perf.revenue)}</p>
+              </div>
             </div>
 
             <form onSubmit={submitSearch} className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 space-y-3">
@@ -152,7 +153,7 @@ const AdminUserManagementScreen = () => {
                     type="text"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Search by name or email..."
+                    placeholder="Search by seller shop, owner, email, phone..."
                     className="w-full pl-10 pr-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl focus:outline-none focus:border-cyan-500"
                   />
                 </div>
@@ -171,6 +172,7 @@ const AdminUserManagementScreen = () => {
                   ))}
                 </select>
               </div>
+
               <div className="flex flex-wrap gap-2">
                 <button type="submit" className="px-5 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-[#04111f] font-black">
                   Search
@@ -182,86 +184,77 @@ const AdminUserManagementScreen = () => {
                 >
                   <FaSync className={isFetching ? 'animate-spin' : ''} /> Refresh
                 </button>
-                <span className="px-4 py-3 rounded-xl border border-white/10 bg-[#020617]/80 text-sm text-gray-300 inline-flex items-center gap-2">
-                  <FaUserShield /> {total} users found
-                </span>
+                <div className="px-4 py-3 rounded-xl border border-white/10 bg-[#020617]/80 text-sm text-gray-300 inline-flex items-center gap-2">
+                  <FaTachometerAlt /> {total} sellers found
+                </div>
+                <select
+                  value={status}
+                  onChange={(e) => {
+                    setPage(1);
+                    setStatus(e.target.value);
+                  }}
+                  className="px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl"
+                >
+                  <option value="all" className="bg-[#0b1220]">Status: All</option>
+                  <option value="approved" className="bg-[#0b1220]">Approved</option>
+                  <option value="pending" className="bg-[#0b1220]">Pending</option>
+                  <option value="suspended" className="bg-[#0b1220]">Suspended</option>
+                </select>
               </div>
             </form>
 
-            {isLoading ? <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 text-gray-300">Loading users...</div> : null}
+            {isLoading ? <div className="bg-[#0f172a] border border-white/10 rounded-2xl p-6 text-gray-300">Loading sellers...</div> : null}
             {isError ? (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-red-200">
-                Failed to load users.
-              </div>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-red-200">Failed to load sellers.</div>
             ) : null}
 
             {!isLoading && !isError && (
               <div className="bg-[#0f172a] border border-white/10 rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1050px]">
+                  <table className="w-full min-w-[1180px]">
                     <thead className="bg-[#0a1224] border-b border-white/10">
                       <tr className="text-left text-xs uppercase tracking-wider text-gray-400">
-                        <th className="px-4 py-3">User</th>
-                        <th className="px-4 py-3">Role</th>
-                        <th className="px-4 py-3">Google</th>
-                        <th className="px-4 py-3">Paid Orders</th>
-                        <th className="px-4 py-3">Total Spent</th>
-                        <th className="px-4 py-3">Created</th>
-                        <th className="px-4 py-3">Actions</th>
+                        <th className="px-4 py-3">Seller</th>
+                        <th className="px-4 py-3">Orders</th>
+                        <th className="px-4 py-3">Delivered</th>
+                        <th className="px-4 py-3">Late</th>
+                        <th className="px-4 py-3">Delivery Rate</th>
+                        <th className="px-4 py-3">Revenue</th>
+                        <th className="px-4 py-3">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {users.length === 0 ? (
+                      {sellers.length === 0 ? (
                         <tr>
                           <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                            No users found for this filter.
+                            No seller records found for this filter.
                           </td>
                         </tr>
                       ) : (
-                        users.map((user) => (
-                          <tr key={user._id} className="border-b border-white/5 hover:bg-white/[0.03]">
+                        sellers.map((seller) => (
+                          <tr
+                            key={seller._id}
+                            className="border-b border-white/5 hover:bg-white/[0.03] cursor-pointer"
+                            onClick={() => navigate(`/admin/sellers/${seller._id}`)}
+                          >
                             <td className="px-4 py-4">
-                              <p className="font-black text-gray-100">{user.name}</p>
-                              <p className="text-sm text-gray-400">{user.email}</p>
+                              <p className="font-black text-gray-100">{seller.shopName}</p>
+                              <p className="text-sm text-gray-400">{seller.name}</p>
+                              <p className="text-xs text-gray-500">{seller.email}</p>
                             </td>
+                            <td className="px-4 py-4 text-sm font-bold text-gray-200">{seller.paidOrdersCount || 0}</td>
+                            <td className="px-4 py-4 text-sm font-bold text-emerald-200">{seller.deliveredOrdersCount || 0}</td>
+                            <td className="px-4 py-4 text-sm font-bold text-red-200">{seller.lateOrdersCount || 0}</td>
+                            <td className="px-4 py-4 text-sm font-black text-violet-200">{formatPercent(seller.deliveryRate)}</td>
+                            <td className="px-4 py-4 text-sm font-black text-amber-200">{currency(seller.totalRevenue)}</td>
                             <td className="px-4 py-4">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-xs font-black border ${
-                                  user.role === 'admin'
-                                    ? 'border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-200'
-                                    : user.role === 'seller'
-                                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-200'
-                                    : 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200'
-                                }`}
-                              >
-                                {user.role}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4 text-sm text-gray-300">{user.googleId ? 'Linked' : 'No'}</td>
-                            <td className="px-4 py-4 text-sm font-bold text-gray-200">{user.paidOrdersCount || 0}</td>
-                            <td className="px-4 py-4 text-sm font-black text-emerald-200">{currency(user.totalSpent)}</td>
-                            <td className="px-4 py-4 text-sm text-gray-300">{new Date(user.createdAt).toLocaleDateString()}</td>
-                            <td className="px-4 py-4">
-                              <div className="flex flex-wrap gap-2">
-                                {user.role !== 'admin' ? (
-                                  <button
-                                    type="button"
-                                    disabled={updatingRole}
-                                    onClick={() => updateRole(user._id, 'admin')}
-                                    className="px-3 py-1.5 rounded-lg bg-fuchsia-500 hover:bg-fuchsia-400 text-[#1b1024] text-xs font-black"
-                                  >
-                                    Make Admin
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    disabled={updatingRole}
-                                    onClick={() => updateRole(user._id, 'buyer')}
-                                    className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#201404] text-xs font-black"
-                                  >
-                                    Make Buyer
-                                  </button>
-                                )}
+                              <div className="flex flex-col gap-2">
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-black border w-fit ${seller.isApproved ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200' : 'border-amber-500/30 bg-amber-500/10 text-amber-200'}`}>
+                                  {seller.isApproved ? 'Approved' : 'Pending'}
+                                </span>
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-black border w-fit ${seller.isActive ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200' : 'border-red-500/30 bg-red-500/10 text-red-200'}`}>
+                                  {seller.isActive ? 'Active' : 'Suspended'}
+                                </span>
                               </div>
                             </td>
                           </tr>

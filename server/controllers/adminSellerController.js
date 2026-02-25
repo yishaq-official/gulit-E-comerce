@@ -64,6 +64,7 @@ const getSellersForAdmin = async (req, res) => {
   const normalizedPage = Math.max(Number(page) || 1, 1);
   const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
   const skip = (normalizedPage - 1) * normalizedLimit;
+  const overdue7 = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
 
   const filter = {};
   const trimmedKeyword = String(keyword || '').trim();
@@ -100,6 +101,9 @@ const getSellersForAdmin = async (req, res) => {
     shopName: 'shopName',
     ownerName: 'name',
     paidOrders: 'paidOrdersCount',
+    deliveredOrders: 'deliveredOrdersCount',
+    lateOrders: 'lateOrdersCount',
+    deliveryRate: 'deliveryRate',
     pendingOrders: 'pendingOrdersCount',
     revenue: 'totalRevenue',
     products: 'totalProducts',
@@ -133,12 +137,14 @@ const getSellersForAdmin = async (req, res) => {
               _id: '$_id',
               isPaid: { $first: '$isPaid' },
               isDelivered: { $first: '$isDelivered' },
+              paidAt: { $first: '$paidAt' },
               sellerRevenue: { $sum: { $ifNull: ['$orderItems.sellerRevenue', 0] } },
             },
           },
           {
             $group: {
               _id: null,
+              totalOrdersCount: { $sum: 1 },
               totalRevenue: {
                 $sum: {
                   $cond: [{ $eq: ['$isPaid', true] }, '$sellerRevenue', 0],
@@ -161,6 +167,35 @@ const getSellersForAdmin = async (req, res) => {
                   ],
                 },
               },
+              deliveredOrdersCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ['$isPaid', true] },
+                        { $eq: ['$isDelivered', true] },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              lateOrdersCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ['$isPaid', true] },
+                        { $eq: ['$isDelivered', false] },
+                        { $lte: ['$paidAt', overdue7] },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
             },
           },
         ],
@@ -170,9 +205,28 @@ const getSellersForAdmin = async (req, res) => {
     {
       $addFields: {
         totalProducts: { $ifNull: [{ $arrayElemAt: ['$productStats.totalProducts', 0] }, 0] },
+        totalOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.totalOrdersCount', 0] }, 0] },
         totalRevenue: { $ifNull: [{ $arrayElemAt: ['$orderStats.totalRevenue', 0] }, 0] },
         paidOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.paidOrdersCount', 0] }, 0] },
         pendingOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.pendingOrdersCount', 0] }, 0] },
+        deliveredOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.deliveredOrdersCount', 0] }, 0] },
+        lateOrdersCount: { $ifNull: [{ $arrayElemAt: ['$orderStats.lateOrdersCount', 0] }, 0] },
+      },
+    },
+    {
+      $addFields: {
+        deliveryRate: {
+          $cond: [
+            { $gt: ['$paidOrdersCount', 0] },
+            {
+              $multiply: [
+                { $divide: ['$deliveredOrdersCount', '$paidOrdersCount'] },
+                100,
+              ],
+            },
+            0,
+          ],
+        },
       },
     },
     {
