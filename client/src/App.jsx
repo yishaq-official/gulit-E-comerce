@@ -51,6 +51,10 @@ import AdminResetPasswordScreen from './admin/pages/AdminResetPasswordScreen';
 import AdminDashboardScreen from './admin/pages/AdminDashboardScreen';
 import AdminSellerReviewScreen from './admin/pages/AdminSellerReviewScreen';
 import AdminSellerDetailsScreen from './admin/pages/AdminSellerDetailsScreen';
+import AdminUserManagementScreen from './admin/pages/AdminUserManagementScreen';
+import AdminOrdersDisputesScreen from './admin/pages/AdminOrdersDisputesScreen';
+import AdminFinanceScreen from './admin/pages/AdminFinanceScreen';
+import AdminSupportDeskScreen from './admin/pages/AdminSupportDeskScreen';
 import AdminRouteGuard from './admin/components/AdminRoute';
 
 
@@ -125,6 +129,10 @@ const App = () => {
           <Route path="/admin/dashboard" element={<AdminDashboardScreen />} />
           <Route path="/admin/sellers" element={<AdminSellerReviewScreen />} />
           <Route path="/admin/sellers/:id" element={<AdminSellerDetailsScreen />} />
+          <Route path="/admin/users" element={<AdminUserManagementScreen />} />
+          <Route path="/admin/disputes" element={<AdminOrdersDisputesScreen />} />
+          <Route path="/admin/finance" element={<AdminFinanceScreen />} />
+          <Route path="/admin/support" element={<AdminSupportDeskScreen />} />
         </Route>
 
       </Routes>
