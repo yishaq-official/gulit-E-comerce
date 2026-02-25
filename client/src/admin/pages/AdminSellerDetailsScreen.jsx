@@ -203,14 +203,14 @@ const AdminSellerDetailsScreen = () => {
   return (
     <div className="min-h-screen bg-[#070c18] text-white flex flex-col">
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#081122]/95 backdrop-blur">
-        <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <img src={logo} alt="Gulit" className="w-12 h-12 object-contain" />
+            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-cyan-400/15 via-white/5 to-blue-500/15 border border-cyan-400/30 shadow-[0_10px_30px_rgba(56,189,248,0.25)] flex items-center justify-center">
+              <img src={logo} alt="Gulit" className="w-20 h-20 object-contain drop-shadow-[0_6px_20px_rgba(34,211,238,0.45)]" />
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-300 font-bold">Gulit Admin</p>
-              <p className="text-sm font-bold text-gray-100">Seller Detail Workspace</p>
+              <p className="text-sm uppercase tracking-[0.18em] text-cyan-300 font-bold">Gulit Admin</p>
+              <p className="text-lg font-black text-gray-100">Seller Detail Workspace</p>
             </div>
           </div>
           <button
