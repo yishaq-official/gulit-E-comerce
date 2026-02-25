@@ -71,6 +71,18 @@ const orderSchema = mongoose.Schema(
     deliveredAt: {
       type: Date,
     },
+    disputeStatus: {
+      type: String,
+      enum: ['none', 'open', 'in_review', 'resolved', 'rejected'],
+      default: 'none',
+    },
+    disputeNote: {
+      type: String,
+      default: '',
+    },
+    disputeUpdatedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

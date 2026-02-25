@@ -155,6 +155,33 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['AdminUser'],
     }),
+    adminGetOrders: builder.query({
+      query: ({
+        page = 1,
+        limit = 12,
+        keyword = '',
+        payment = 'all',
+        delivery = 'all',
+        dispute = 'all',
+        risk = 'all',
+      } = {}) => ({
+        url: `/api/admin/orders?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&keyword=${encodeURIComponent(
+          keyword
+        )}&payment=${encodeURIComponent(payment)}&delivery=${encodeURIComponent(delivery)}&dispute=${encodeURIComponent(
+          dispute
+        )}&risk=${encodeURIComponent(risk)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminOrder'],
+    }),
+    adminUpdateOrderDispute: builder.mutation({
+      query: ({ orderId, disputeStatus, disputeNote }) => ({
+        url: `/api/admin/orders/${orderId}/dispute`,
+        method: 'PATCH',
+        body: { disputeStatus, disputeNote },
+      }),
+      invalidatesTags: ['AdminOrder'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -176,4 +203,6 @@ export const {
   useAdminAddSellerNoteMutation,
   useAdminGetUsersQuery,
   useAdminUpdateUserRoleMutation,
+  useAdminGetOrdersQuery,
+  useAdminUpdateOrderDisputeMutation,
 } = adminApiSlice;

@@ -12,6 +12,7 @@ const sellerProductRoutes = require('./routes/sellerProductRoutes');
 const adminAuthRoutes = require('./routes/adminAuthRoutes');
 const adminSellerRoutes = require('./routes/adminSellerRoutes');
 const adminUserRoutes = require('./routes/adminUserRoutes');
+const adminOrderRoutes = require('./routes/adminOrderRoutes');
 
 
 dotenv.config();
@@ -39,6 +40,7 @@ app.use('/api/sellers/products', sellerProductRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/sellers', adminSellerRoutes);
 app.use('/api/admin/users', adminUserRoutes);
+app.use('/api/admin/orders', adminOrderRoutes);
 
 
 
