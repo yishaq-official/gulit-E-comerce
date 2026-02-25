@@ -15,6 +15,37 @@ const logSellerActivity = async ({ sellerId, adminId, action, note = '', metadat
   });
 };
 
+const buildActivityFilter = ({ sellerId, action, severity, dateFrom, dateTo }) => {
+  const filter = { seller: sellerId };
+
+  if (action && action !== 'all') {
+    filter.action = action;
+  }
+  if (severity && severity !== 'all') {
+    filter['metadata.severity'] = severity;
+  }
+
+  if (dateFrom || dateTo) {
+    filter.createdAt = {};
+    if (dateFrom) {
+      const start = new Date(dateFrom);
+      if (!Number.isNaN(start.getTime())) filter.createdAt.$gte = start;
+    }
+    if (dateTo) {
+      const end = new Date(dateTo);
+      if (!Number.isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = end;
+      }
+    }
+    if (!filter.createdAt.$gte && !filter.createdAt.$lte) {
+      delete filter.createdAt;
+    }
+  }
+
+  return filter;
+};
+
 // @desc    Get sellers for admin review
 // @route   GET /api/admin/sellers
 // @access  Private/Admin
@@ -201,6 +232,11 @@ const updateSellerStatusByAdmin = async (req, res) => {
     seller.isActive = isActive;
   }
 
+  const activeStatusChanged = previous.isActive !== seller.isActive;
+  if (activeStatusChanged && !String(note || '').trim()) {
+    return res.status(400).json({ message: 'Reason note is required for suspend/reactivate actions' });
+  }
+
   const updated = await seller.save();
 
   const statusChangeParts = [];
@@ -280,7 +316,7 @@ const addSellerAdminNote = async (req, res) => {
 // @access  Private/Admin
 const getSellerActivityForAdmin = async (req, res) => {
   const { id } = req.params;
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, action = 'all', severity = 'all', dateFrom = '', dateTo = '' } = req.query;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({ message: 'Invalid seller id' });
@@ -294,14 +330,21 @@ const getSellerActivityForAdmin = async (req, res) => {
   const normalizedPage = Math.max(Number(page) || 1, 1);
   const normalizedLimit = Math.min(Math.max(Number(limit) || 10, 1), 100);
   const skip = (normalizedPage - 1) * normalizedLimit;
+  const filter = buildActivityFilter({
+    sellerId: seller._id,
+    action: String(action || 'all'),
+    severity: String(severity || 'all'),
+    dateFrom: String(dateFrom || ''),
+    dateTo: String(dateTo || ''),
+  });
 
   const [activities, total] = await Promise.all([
-    AdminSellerActivity.find({ seller: seller._id })
+    AdminSellerActivity.find(filter)
       .populate('admin', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(normalizedLimit),
-    AdminSellerActivity.countDocuments({ seller: seller._id }),
+    AdminSellerActivity.countDocuments(filter),
   ]);
 
   const pages = Math.max(Math.ceil(total / normalizedLimit), 1);

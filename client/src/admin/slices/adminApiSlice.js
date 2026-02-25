@@ -105,8 +105,20 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       providesTags: ['AdminSeller'],
     }),
     adminGetSellerActivity: builder.query({
-      query: ({ sellerId, page = 1, limit = 10 } = {}) => ({
-        url: `/api/admin/sellers/${sellerId}/activity?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`,
+      query: ({
+        sellerId,
+        page = 1,
+        limit = 10,
+        action = 'all',
+        severity = 'all',
+        dateFrom = '',
+        dateTo = '',
+      } = {}) => ({
+        url: `/api/admin/sellers/${sellerId}/activity?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(
+          limit
+        )}&action=${encodeURIComponent(action)}&severity=${encodeURIComponent(severity)}&dateFrom=${encodeURIComponent(
+          dateFrom
+        )}&dateTo=${encodeURIComponent(dateTo)}`,
       }),
       keepUnusedDataFor: 5,
       providesTags: ['AdminSeller'],

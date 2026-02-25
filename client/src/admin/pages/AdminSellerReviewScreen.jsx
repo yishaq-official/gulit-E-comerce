@@ -330,7 +330,19 @@ const AdminSellerReviewScreen = () => {
                                   <button
                                     type="button"
                                     disabled={updating}
-                                    onClick={() => applyStatusUpdate(seller._id, { isActive: false }, `${seller.shopName} suspended`)}
+                                    onClick={() => {
+                                      const note = window.prompt('Reason for suspension (required):', '');
+                                      if (note === null) return;
+                                      if (!String(note).trim()) {
+                                        toast.error('Suspension reason is required');
+                                        return;
+                                      }
+                                      applyStatusUpdate(
+                                        seller._id,
+                                        { isActive: false, note: String(note).trim() },
+                                        `${seller.shopName} suspended`
+                                      );
+                                    }}
                                     className="px-3 py-1.5 rounded-lg bg-red-500/90 hover:bg-red-500 text-white text-xs font-black inline-flex items-center gap-1"
                                   >
                                     <FaPowerOff /> Suspend
@@ -339,7 +351,19 @@ const AdminSellerReviewScreen = () => {
                                   <button
                                     type="button"
                                     disabled={updating}
-                                    onClick={() => applyStatusUpdate(seller._id, { isActive: true }, `${seller.shopName} reactivated`)}
+                                    onClick={() => {
+                                      const note = window.prompt('Reason for reactivation (required):', '');
+                                      if (note === null) return;
+                                      if (!String(note).trim()) {
+                                        toast.error('Reactivation reason is required');
+                                        return;
+                                      }
+                                      applyStatusUpdate(
+                                        seller._id,
+                                        { isActive: true, note: String(note).trim() },
+                                        `${seller.shopName} reactivated`
+                                      );
+                                    }}
                                     className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-[#04111f] text-xs font-black inline-flex items-center gap-1"
                                   >
                                     <FaShieldAlt /> Reactivate
