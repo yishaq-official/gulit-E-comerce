@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaBullhorn } from 'react-icons/fa';
 import { useGetPlatformUpdatesQuery } from '../store/slices/platformApiSlice';
+import RichTextMessage from './RichTextMessage';
 
 const bannerClass = (priority) => {
   if (priority === 'high') return 'border-red-500/35 bg-red-500/10 text-red-100';
@@ -26,7 +27,7 @@ const PlatformUpdatesBanner = ({ audience }) => {
             Platform Update
           </p>
           <p className="font-black mt-1">{update.title}</p>
-          <p className="text-sm mt-1 opacity-95">{update.message}</p>
+          <RichTextMessage text={update.message} className="text-sm mt-1 opacity-95" />
         </div>
       ))}
     </div>

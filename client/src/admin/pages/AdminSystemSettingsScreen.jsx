@@ -11,6 +11,7 @@ import {
   useAdminGetPlatformUpdatesQuery,
   useAdminUpdatePlatformUpdateMutation,
 } from '../slices/adminApiSlice';
+import RichTextMessage from '../../components/RichTextMessage';
 
 const AdminSystemSettingsScreen = () => {
   const dispatch = useDispatch();
@@ -24,6 +25,8 @@ const AdminSystemSettingsScreen = () => {
   const [audience, setAudience] = useState('buyer');
   const [priority, setPriority] = useState('medium');
   const [isActive, setIsActive] = useState(true);
+  const [startAt, setStartAt] = useState('');
+  const [endAt, setEndAt] = useState('');
 
   const { data, isLoading, isError, isFetching, refetch } = useAdminGetPlatformUpdatesQuery({
     audience: audienceFilter,
@@ -43,13 +46,27 @@ const AdminSystemSettingsScreen = () => {
 
   const submitCreate = async (e) => {
     e.preventDefault();
+    if (startAt && endAt && new Date(endAt) <= new Date(startAt)) {
+      toast.error('End date/time must be after start date/time');
+      return;
+    }
     try {
-      await createUpdate({ title, message, audience, priority, isActive }).unwrap();
+      await createUpdate({
+        title,
+        message,
+        audience,
+        priority,
+        isActive,
+        startAt: startAt || undefined,
+        endAt: endAt || undefined,
+      }).unwrap();
       setTitle('');
       setMessage('');
       setAudience('buyer');
       setPriority('medium');
       setIsActive(true);
+      setStartAt('');
+      setEndAt('');
       toast.success('Platform update published');
     } catch (err) {
       toast.error(err?.data?.message || err.error || 'Failed to create update');
@@ -113,7 +130,38 @@ const AdminSystemSettingsScreen = () => {
                   <option value="high" className="bg-[#0b1220]">Priority: High</option>
                 </select>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="text-sm text-gray-300 space-y-1">
+                  <span>Start at (optional)</span>
+                  <input
+                    type="datetime-local"
+                    value={startAt}
+                    onChange={(e) => setStartAt(e.target.value)}
+                    className="w-full px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl"
+                  />
+                </label>
+                <label className="text-sm text-gray-300 space-y-1">
+                  <span>End at (optional)</span>
+                  <input
+                    type="datetime-local"
+                    value={endAt}
+                    onChange={(e) => setEndAt(e.target.value)}
+                    className="w-full px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl"
+                  />
+                </label>
+              </div>
               <textarea rows={3} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Announcement message..." className="w-full px-3 py-3 bg-[#020617]/80 border border-white/10 rounded-xl" />
+              <p className="text-xs text-gray-400">
+                Rich text supported: `**bold**`, `*italic*`, `- bullet`, `[link](https://...)`
+              </p>
+              <div className="rounded-xl border border-white/10 bg-[#020617]/60 p-3">
+                <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-2">Preview</p>
+                {message ? (
+                  <RichTextMessage text={message} className="text-sm text-gray-200" />
+                ) : (
+                  <p className="text-sm text-gray-500">Announcement preview appears here.</p>
+                )}
+              </div>
               <label className="inline-flex items-center gap-2 text-sm text-gray-300">
                 <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
                 Active immediately
@@ -156,23 +204,28 @@ const AdminSystemSettingsScreen = () => {
                         <th className="px-3 py-2 text-left">Audience</th>
                         <th className="px-3 py-2 text-left">Priority</th>
                         <th className="px-3 py-2 text-left">Status</th>
+                        <th className="px-3 py-2 text-left">Schedule</th>
                         <th className="px-3 py-2 text-left">Created</th>
                         <th className="px-3 py-2 text-left">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {updates.length === 0 ? (
-                        <tr><td colSpan={6} className="px-3 py-6 text-center text-gray-400">No updates found.</td></tr>
+                        <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-400">No updates found.</td></tr>
                       ) : (
                         updates.map((item) => (
                           <tr key={item._id} className="border-b border-white/5">
                             <td className="px-3 py-3">
                               <p className="font-black text-gray-100">{item.title}</p>
-                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.message}</p>
+                              <RichTextMessage text={item.message} className="text-xs text-gray-500 mt-1 line-clamp-2" />
                             </td>
                             <td className="px-3 py-3 text-sm capitalize">{item.audience}</td>
                             <td className="px-3 py-3 text-sm capitalize">{item.priority}</td>
                             <td className="px-3 py-3 text-sm">{item.isActive ? 'Active' : 'Inactive'}</td>
+                            <td className="px-3 py-3 text-xs text-gray-400">
+                              <p>Start: {item.startAt ? new Date(item.startAt).toLocaleString() : '-'}</p>
+                              <p>End: {item.endAt ? new Date(item.endAt).toLocaleString() : 'No end'}</p>
+                            </td>
                             <td className="px-3 py-3 text-sm text-gray-400">{new Date(item.createdAt).toLocaleString()}</td>
                             <td className="px-3 py-3">
                               <button

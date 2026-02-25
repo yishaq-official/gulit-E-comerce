@@ -53,6 +53,17 @@ const createPlatformUpdateByAdmin = async (req, res) => {
   }
 
   const normalizedPriority = ['low', 'medium', 'high'].includes(String(priority)) ? String(priority) : 'medium';
+  const parsedStartAt = startAt ? new Date(startAt) : new Date();
+  if (Number.isNaN(parsedStartAt.getTime())) {
+    return res.status(400).json({ message: 'Invalid start date/time' });
+  }
+  const parsedEndAt = endAt ? new Date(endAt) : null;
+  if (parsedEndAt && Number.isNaN(parsedEndAt.getTime())) {
+    return res.status(400).json({ message: 'Invalid end date/time' });
+  }
+  if (parsedEndAt && parsedEndAt <= parsedStartAt) {
+    return res.status(400).json({ message: 'End date/time must be after start date/time' });
+  }
 
   const update = await PlatformUpdate.create({
     title: String(title).trim(),
@@ -60,8 +71,8 @@ const createPlatformUpdateByAdmin = async (req, res) => {
     audience: String(audience),
     priority: normalizedPriority,
     isActive: Boolean(isActive),
-    startAt: startAt ? new Date(startAt) : new Date(),
-    endAt: endAt ? new Date(endAt) : null,
+    startAt: parsedStartAt,
+    endAt: parsedEndAt,
     createdBy: req.user._id,
   });
 
@@ -90,8 +101,23 @@ const updatePlatformUpdateByAdmin = async (req, res) => {
   if (audience !== undefined && ['buyer', 'seller'].includes(String(audience))) update.audience = String(audience);
   if (priority !== undefined && ['low', 'medium', 'high'].includes(String(priority))) update.priority = String(priority);
   if (isActive !== undefined) update.isActive = Boolean(isActive);
-  if (startAt !== undefined) update.startAt = startAt ? new Date(startAt) : update.startAt;
-  if (endAt !== undefined) update.endAt = endAt ? new Date(endAt) : null;
+  if (startAt !== undefined) {
+    const parsedStartAt = startAt ? new Date(startAt) : update.startAt;
+    if (Number.isNaN(parsedStartAt.getTime())) {
+      return res.status(400).json({ message: 'Invalid start date/time' });
+    }
+    update.startAt = parsedStartAt;
+  }
+  if (endAt !== undefined) {
+    const parsedEndAt = endAt ? new Date(endAt) : null;
+    if (parsedEndAt && Number.isNaN(parsedEndAt.getTime())) {
+      return res.status(400).json({ message: 'Invalid end date/time' });
+    }
+    update.endAt = parsedEndAt;
+  }
+  if (update.endAt && update.endAt <= update.startAt) {
+    return res.status(400).json({ message: 'End date/time must be after start date/time' });
+  }
 
   await update.save();
   return res.json({ message: 'Platform update saved', updateId: update._id, isActive: update.isActive });
