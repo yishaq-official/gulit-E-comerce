@@ -80,6 +80,36 @@ export const sellersApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+    getSellerSupportInbox: builder.query({
+      query: () => ({
+        url: '/api/sellers/support/inbox',
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['seller'],
+    }),
+    createSellerSupportTicket: builder.mutation({
+      query: (data) => ({
+        url: '/api/sellers/support/tickets',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['seller'],
+    }),
+    replySellerSupportThread: builder.mutation({
+      query: ({ threadId, message }) => ({
+        url: `/api/sellers/support/threads/${threadId}/reply`,
+        method: 'POST',
+        body: { message },
+      }),
+      invalidatesTags: ['seller'],
+    }),
+    markSellerSupportThreadRead: builder.mutation({
+      query: (threadId) => ({
+        url: `/api/sellers/support/threads/${threadId}/read`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: ['seller'],
+    }),
     
   }),
 });
@@ -95,4 +125,8 @@ export const {
   useGetSellerWalletQuery,
   useGetSellerSettingsQuery,
   useUpdateSellerSettingsMutation,
+  useGetSellerSupportInboxQuery,
+  useCreateSellerSupportTicketMutation,
+  useReplySellerSupportThreadMutation,
+  useMarkSellerSupportThreadReadMutation,
 } = sellersApiSlice;

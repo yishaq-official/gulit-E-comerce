@@ -43,6 +43,7 @@ import SellerWalletScreen from './pages/seller/SellerWalletScreen';
 import SellerSettingsScreen from './pages/seller/SellerSettingsScreen';
 import SellerHelpCenterScreen from './pages/seller/SellerHelpCenterScreen';
 import SellerRulesCenterScreen from './pages/seller/SellerRulesCenterScreen';
+import SellerInboxScreen from './pages/seller/SellerInboxScreen';
 
 // Admin Pages
 import AdminLoginScreen from './admin/pages/AdminLoginScreen';
@@ -115,6 +116,7 @@ const App = () => {
           <Route path="/seller/orders" element={<SellerOrderListScreen />} />
           <Route path="/seller/order/:id" element={<SellerOrderDetailsScreen />} />
           <Route path="/seller/wallet" element={<SellerWalletScreen />} />
+          <Route path="/seller/inbox" element={<SellerInboxScreen />} />
           <Route path="/seller/settings" element={<SellerSettingsScreen />} />
           </Route>
         </Route>

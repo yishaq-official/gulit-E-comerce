@@ -1,147 +1,89 @@
 const mongoose = require('mongoose');
-const Order = require('../models/orderModel');
+const SupportThread = require('../models/supportThreadModel');
 const Seller = require('../models/sellerModel');
-
-const toDate = (value) => {
-  const date = value ? new Date(value) : null;
-  return Number.isNaN(date?.getTime?.()) ? new Date(0) : date;
-};
 
 const normalize = (value) => String(value || '').trim().toLowerCase();
 
-// @desc    Get support operations queue for admin
+// @desc    Get admin support inbox
 // @route   GET /api/admin/support
 // @access  Private/Admin
-const getAdminSupportQueue = async (req, res) => {
-  const { page = 1, limit = 12, keyword = '', source = 'all', status = 'all' } = req.query;
+const getAdminSupportInbox = async (req, res) => {
+  const { page = 1, limit = 12, keyword = '', status = 'all', type = 'all' } = req.query;
 
   const normalizedPage = Math.max(Number(page) || 1, 1);
   const normalizedLimit = Math.min(Math.max(Number(limit) || 12, 1), 100);
   const skip = (normalizedPage - 1) * normalizedLimit;
+  const keywordText = normalize(keyword);
 
-  const overdue7 = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+  const pipeline = [
+    {
+      $lookup: {
+        from: 'sellers',
+        localField: 'seller',
+        foreignField: '_id',
+        as: 'sellerDoc',
+      },
+    },
+    {
+      $unwind: {
+        path: '$sellerDoc',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $addFields: {
+        sellerName: '$sellerDoc.shopName',
+        sellerEmail: '$sellerDoc.email',
+        threadIdStr: { $toString: '$_id' },
+        lastMessage: { $arrayElemAt: ['$messages', -1] },
+      },
+    },
+  ];
 
-  const [disputeOrders, delayedOrders, flaggedSellers] = await Promise.all([
-    Order.find({ disputeStatus: { $ne: 'none' } })
-      .populate('user', 'name email')
-      .sort({ disputeUpdatedAt: -1, updatedAt: -1 })
-      .limit(300)
-      .lean(),
-    Order.find({ isPaid: true, isDelivered: false, paidAt: { $lte: overdue7 } })
-      .populate('user', 'name email')
-      .sort({ paidAt: 1 })
-      .limit(300)
-      .lean(),
-    Seller.find({ $or: [{ isApproved: false }, { isActive: false }] })
-      .sort({ updatedAt: -1 })
-      .limit(300)
-      .lean(),
-  ]);
-
-  const disputeCases = disputeOrders.map((order) => {
-    const daysSincePaid = order.paidAt
-      ? Math.floor((Date.now() - new Date(order.paidAt).getTime()) / (1000 * 60 * 60 * 24))
-      : 0;
-    const priority = daysSincePaid >= 14 ? 'high' : daysSincePaid >= 7 ? 'medium' : 'low';
-
-    return {
-      caseKey: `dispute:${order._id}`,
-      source: 'dispute',
-      sourceId: String(order._id),
-      status: order.disputeStatus || 'open',
-      priority,
-      subject: `Order dispute #${order._id}`,
-      actorName: order.user?.name || 'Unknown buyer',
-      actorEmail: order.user?.email || '-',
-      amount: Number(order.totalPrice || 0),
-      note: order.disputeNote || '',
-      updatedAt: order.disputeUpdatedAt || order.updatedAt || order.createdAt,
-    };
-  });
-
-  const delayedCases = delayedOrders.map((order) => {
-    const daysSincePaid = order.paidAt
-      ? Math.floor((Date.now() - new Date(order.paidAt).getTime()) / (1000 * 60 * 60 * 24))
-      : 0;
-    const priority = daysSincePaid >= 14 ? 'high' : 'medium';
-
-    return {
-      caseKey: `delivery:${order._id}`,
-      source: 'delivery',
-      sourceId: String(order._id),
-      status: order.disputeStatus && order.disputeStatus !== 'none' ? order.disputeStatus : 'open',
-      priority,
-      subject: `Delayed delivery #${order._id}`,
-      actorName: order.user?.name || 'Unknown buyer',
-      actorEmail: order.user?.email || '-',
-      amount: Number(order.totalPrice || 0),
-      note: order.disputeNote || '',
-      updatedAt: order.disputeUpdatedAt || order.updatedAt || order.paidAt || order.createdAt,
-    };
-  });
-
-  const sellerCases = flaggedSellers.map((seller) => {
-    let caseStatus = 'pending';
-    let priority = 'medium';
-    if (!seller.isActive) {
-      caseStatus = 'suspended';
-      priority = 'high';
-    } else if (!seller.isApproved) {
-      caseStatus = 'pending';
-      priority = 'medium';
-    }
-
-    return {
-      caseKey: `seller:${seller._id}`,
-      source: 'seller',
-      sourceId: String(seller._id),
-      status: caseStatus,
-      priority,
-      subject: `Seller compliance: ${seller.shopName || seller.name || seller.email}`,
-      actorName: seller.name || seller.shopName || '-',
-      actorEmail: seller.email || '-',
-      amount: Number(seller.walletBalance || 0),
-      note: '',
-      updatedAt: seller.updatedAt || seller.createdAt,
-    };
-  });
-
-  const sourceFilter = normalize(source);
-  const statusFilter = normalize(status);
-  const keywordFilter = normalize(keyword);
-
-  let cases = [...disputeCases, ...delayedCases, ...sellerCases];
-
-  if (sourceFilter !== 'all') {
-    cases = cases.filter((item) => item.source === sourceFilter);
+  if (status !== 'all') {
+    pipeline.push({ $match: { status } });
   }
-  if (statusFilter !== 'all') {
-    cases = cases.filter((item) => normalize(item.status) === statusFilter);
+  if (type !== 'all') {
+    pipeline.push({ $match: { threadType: type } });
   }
-  if (keywordFilter) {
-    cases = cases.filter((item) => {
-      const haystack = normalize(
-        `${item.subject} ${item.actorName} ${item.actorEmail} ${item.sourceId} ${item.note}`
-      );
-      return haystack.includes(keywordFilter);
+  if (keywordText) {
+    const regex = new RegExp(keywordText, 'i');
+    pipeline.push({
+      $match: {
+        $or: [{ threadIdStr: regex }, { subject: regex }, { sellerName: regex }, { sellerEmail: regex }, { 'lastMessage.body': regex }],
+      },
     });
   }
 
-  cases.sort((a, b) => toDate(b.updatedAt).getTime() - toDate(a.updatedAt).getTime());
+  pipeline.push({ $sort: { lastMessageAt: -1 } });
+  pipeline.push({
+    $facet: {
+      threads: [{ $skip: skip }, { $limit: normalizedLimit }],
+      metadata: [{ $count: 'total' }],
+    },
+  });
 
-  const total = cases.length;
+  const [result] = await SupportThread.aggregate(pipeline);
+  const threads = result?.threads || [];
+  const total = result?.metadata?.[0]?.total || 0;
   const pages = Math.max(Math.ceil(total / normalizedLimit), 1);
-  const paged = cases.slice(skip, skip + normalizedLimit);
+
+  const summaryAgg = await SupportThread.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalThreads: { $sum: 1 },
+        unreadForAdmin: { $sum: { $cond: [{ $eq: ['$unreadByAdmin', true] }, 1, 0] } },
+        openThreads: { $sum: { $cond: [{ $in: ['$status', ['open', 'in_progress']] }, 1, 0] } },
+        ticketThreads: { $sum: { $cond: [{ $eq: ['$threadType', 'ticket'] }, 1, 0] } },
+      },
+    },
+  ]);
+  const summary = summaryAgg[0] || { totalThreads: 0, unreadForAdmin: 0, openThreads: 0, ticketThreads: 0 };
 
   return res.json({
-    summary: {
-      openDisputes: disputeCases.filter((item) => ['open', 'in_review'].includes(item.status)).length,
-      delayedDeliveries: delayedCases.length,
-      suspendedSellers: sellerCases.filter((item) => item.status === 'suspended').length,
-      pendingSellers: sellerCases.filter((item) => item.status === 'pending').length,
-      totalCases: disputeCases.length + delayedCases.length + sellerCases.length,
-    },
-    cases: paged,
+    summary,
+    threads,
     page: normalizedPage,
     pages,
     total,
@@ -149,73 +91,142 @@ const getAdminSupportQueue = async (req, res) => {
   });
 };
 
-// @desc    Update support case status/action by admin
-// @route   PATCH /api/admin/support/cases/:source/:id
+// @desc    Admin reply to support thread
+// @route   POST /api/admin/support/threads/:id/reply
 // @access  Private/Admin
-const updateSupportCaseByAdmin = async (req, res) => {
-  const { source, id } = req.params;
-  const { action = '', note = '' } = req.body;
+const replySupportThreadByAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { message } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: 'Invalid case id' });
+    return res.status(400).json({ message: 'Invalid thread id' });
+  }
+  if (!String(message || '').trim()) {
+    return res.status(400).json({ message: 'Message is required' });
   }
 
-  if (source === 'dispute' || source === 'delivery') {
-    const order = await Order.findById(id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+  const thread = await SupportThread.findById(id);
+  if (!thread) {
+    return res.status(404).json({ message: 'Support thread not found' });
+  }
 
-    const actionMap = {
-      open: 'open',
-      review: 'in_review',
-      resolve: 'resolved',
-      reject: 'rejected',
-      reset: 'none',
-    };
-    const nextStatus = actionMap[String(action)] || null;
-    if (!nextStatus) return res.status(400).json({ message: 'Invalid action for order case' });
+  thread.messages.push({
+    senderType: 'admin',
+    senderAdmin: req.user._id,
+    body: String(message).trim(),
+    createdAt: new Date(),
+  });
+  thread.unreadBySeller = thread.threadType !== 'broadcast';
+  thread.unreadByAdmin = false;
+  thread.lastMessageAt = new Date();
 
-    order.disputeStatus = nextStatus;
-    if (note) order.disputeNote = String(note).trim();
-    order.disputeUpdatedAt = new Date();
-    await order.save();
+  if (thread.status === 'open') {
+    thread.status = 'in_progress';
+  }
 
-    return res.json({
-      source,
-      sourceId: order._id,
-      status: order.disputeStatus,
-      note: order.disputeNote || '',
-      message: 'Order support case updated',
+  await thread.save();
+  return res.json({ message: 'Reply sent', threadId: thread._id });
+};
+
+// @desc    Update support thread status by admin
+// @route   PATCH /api/admin/support/threads/:id/status
+// @access  Private/Admin
+const updateSupportThreadStatusByAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid thread id' });
+  }
+
+  const allowed = ['open', 'in_progress', 'resolved', 'closed'];
+  if (!allowed.includes(String(status))) {
+    return res.status(400).json({ message: 'Invalid status' });
+  }
+
+  const thread = await SupportThread.findById(id);
+  if (!thread) {
+    return res.status(404).json({ message: 'Support thread not found' });
+  }
+
+  thread.status = status;
+  await thread.save();
+  return res.json({ message: 'Thread status updated', threadId: thread._id, status: thread.status });
+};
+
+// @desc    Admin send message (broadcast or specific seller)
+// @route   POST /api/admin/support/messages
+// @access  Private/Admin
+const sendSupportMessageByAdmin = async (req, res) => {
+  const { mode = 'seller', sellerId = '', subject = '', message = '', priority = 'medium' } = req.body;
+
+  if (!String(subject || '').trim()) {
+    return res.status(400).json({ message: 'Subject is required' });
+  }
+  if (!String(message || '').trim()) {
+    return res.status(400).json({ message: 'Message is required' });
+  }
+
+  const normalizedPriority = ['low', 'medium', 'high'].includes(String(priority)) ? String(priority) : 'medium';
+
+  if (mode === 'broadcast') {
+    const thread = await SupportThread.create({
+      seller: null,
+      threadType: 'broadcast',
+      subject: String(subject).trim(),
+      category: 'Announcement',
+      status: 'open',
+      priority: normalizedPriority,
+      unreadBySeller: true,
+      unreadByAdmin: false,
+      lastMessageAt: new Date(),
+      messages: [
+        {
+          senderType: 'admin',
+          senderAdmin: req.user._id,
+          body: String(message).trim(),
+          createdAt: new Date(),
+        },
+      ],
     });
+    return res.status(201).json({ message: 'Broadcast sent to all sellers', threadId: thread._id });
   }
 
-  if (source === 'seller') {
-    const seller = await Seller.findById(id);
-    if (!seller) return res.status(404).json({ message: 'Seller not found' });
-
-    if (action === 'approve') {
-      seller.isApproved = true;
-      seller.isActive = true;
-    } else if (action === 'suspend') {
-      seller.isActive = false;
-    } else if (action === 'activate') {
-      seller.isActive = true;
-    } else {
-      return res.status(400).json({ message: 'Invalid action for seller case' });
-    }
-
-    await seller.save();
-    return res.json({
-      source,
-      sourceId: seller._id,
-      status: !seller.isActive ? 'suspended' : seller.isApproved ? 'active' : 'pending',
-      message: 'Seller support case updated',
-    });
+  if (!mongoose.Types.ObjectId.isValid(String(sellerId))) {
+    return res.status(400).json({ message: 'Valid seller id is required for direct message' });
   }
 
-  return res.status(400).json({ message: 'Invalid case source' });
+  const seller = await Seller.findById(sellerId).select('_id');
+  if (!seller) {
+    return res.status(404).json({ message: 'Seller not found' });
+  }
+
+  const thread = await SupportThread.create({
+    seller: seller._id,
+    threadType: 'direct',
+    subject: String(subject).trim(),
+    category: 'Admin Message',
+    status: 'open',
+    priority: normalizedPriority,
+    unreadBySeller: true,
+    unreadByAdmin: false,
+    lastMessageAt: new Date(),
+    messages: [
+      {
+        senderType: 'admin',
+        senderAdmin: req.user._id,
+        body: String(message).trim(),
+        createdAt: new Date(),
+      },
+    ],
+  });
+
+  return res.status(201).json({ message: 'Message sent to seller', threadId: thread._id });
 };
 
 module.exports = {
-  getAdminSupportQueue,
-  updateSupportCaseByAdmin,
+  getAdminSupportInbox,
+  replySupportThreadByAdmin,
+  updateSupportThreadStatusByAdmin,
+  sendSupportMessageByAdmin,
 };

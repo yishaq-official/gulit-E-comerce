@@ -12,6 +12,12 @@ const {
   getSellerWallet,
 } = require('../controllers/sellerController');
 const { getSellerSettings, updateSellerSettings } = require('../controllers/sellerSettingsController');
+const {
+  getSellerSupportInbox,
+  createSellerSupportTicket,
+  replySellerSupportThread,
+  markSellerSupportThreadRead,
+} = require('../controllers/sellerSupportController');
 const { uploadSellerDocs } = require('../middleware/uploadMiddleware');
 // 👇 1. Import the new controller and the protect middleware
 const { getSellerOrders, getSellerOrderById, updateOrderToDelivered } = require('../controllers/sellerOrderController');
@@ -31,5 +37,9 @@ router.route('/settings').get(protectSeller, getSellerSettings).put(protectSelle
 router.route('/orders').get(protectSeller, getSellerOrders);
 router.route('/orders/:id').get(protectSeller, getSellerOrderById);
 router.route('/orders/:id/deliver').put(protectSeller, updateOrderToDelivered);
+router.get('/support/inbox', protectSeller, getSellerSupportInbox);
+router.post('/support/tickets', protectSeller, createSellerSupportTicket);
+router.post('/support/threads/:id/reply', protectSeller, replySellerSupportThread);
+router.patch('/support/threads/:id/read', protectSeller, markSellerSupportThreadRead);
 
 module.exports = router;

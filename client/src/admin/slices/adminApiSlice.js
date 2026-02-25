@@ -216,22 +216,38 @@ export const adminApiSlice = apiSlice.injectEndpoints({
         responseHandler: async (response) => response.text(),
       }),
     }),
-    adminGetSupportQueue: builder.query({
-      query: ({ page = 1, limit = 12, keyword = '', source = 'all', status = 'all' } = {}) => ({
+    adminGetSupportInbox: builder.query({
+      query: ({ page = 1, limit = 12, keyword = '', type = 'all', status = 'all' } = {}) => ({
         url: `/api/admin/support?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}&keyword=${encodeURIComponent(
           keyword
-        )}&source=${encodeURIComponent(source)}&status=${encodeURIComponent(status)}`,
+        )}&type=${encodeURIComponent(type)}&status=${encodeURIComponent(status)}`,
       }),
       keepUnusedDataFor: 5,
       providesTags: ['AdminSupport'],
     }),
-    adminUpdateSupportCase: builder.mutation({
-      query: ({ source, id, action, note = '' }) => ({
-        url: `/api/admin/support/cases/${source}/${id}`,
-        method: 'PATCH',
-        body: { action, note },
+    adminReplySupportThread: builder.mutation({
+      query: ({ threadId, message }) => ({
+        url: `/api/admin/support/threads/${threadId}/reply`,
+        method: 'POST',
+        body: { message },
       }),
-      invalidatesTags: ['AdminSupport', 'AdminOrder', 'AdminSeller'],
+      invalidatesTags: ['AdminSupport'],
+    }),
+    adminUpdateSupportThreadStatus: builder.mutation({
+      query: ({ threadId, status }) => ({
+        url: `/api/admin/support/threads/${threadId}/status`,
+        method: 'PATCH',
+        body: { status },
+      }),
+      invalidatesTags: ['AdminSupport'],
+    }),
+    adminSendSupportMessage: builder.mutation({
+      query: (data) => ({
+        url: '/api/admin/support/messages',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['AdminSupport'],
     }),
   }),
   overrideExisting: false,
@@ -259,6 +275,8 @@ export const {
   useAdminUpdateOrderDisputeMutation,
   useAdminGetFinanceOverviewQuery,
   useAdminExportFinanceReportMutation,
-  useAdminGetSupportQueueQuery,
-  useAdminUpdateSupportCaseMutation,
+  useAdminGetSupportInboxQuery,
+  useAdminReplySupportThreadMutation,
+  useAdminUpdateSupportThreadStatusMutation,
+  useAdminSendSupportMessageMutation,
 } = adminApiSlice;

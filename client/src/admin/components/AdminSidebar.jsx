@@ -16,7 +16,7 @@ const navItems = [
   { key: 'user-management', label: 'User Management', icon: FaUsers, to: '/admin/users' },
   { key: 'orders-disputes', label: 'Orders & Disputes', icon: FaGavel, to: '/admin/disputes' },
   { key: 'finance', label: 'Finance', icon: FaMoneyCheckAlt, to: '/admin/finance' },
-  { key: 'support', label: 'Support Desk', icon: FaLifeRing, to: '/admin/support' },
+  { key: 'support', label: 'Support Inbox', icon: FaLifeRing, to: '/admin/support' },
 ];
 
 const AdminSidebar = ({ activeKey }) => {

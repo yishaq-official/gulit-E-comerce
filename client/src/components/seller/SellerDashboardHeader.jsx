@@ -5,7 +5,7 @@ import { useSellerLogoutApiMutation } from '../../store/slices/sellersApiSlice';
 import { logoutSeller } from '../../store/slices/sellerAuthSlice';
 import { 
   FaUserCircle, FaSignOutAlt, FaCaretDown, FaChartPie, 
-  FaBoxOpen, FaClipboardList, FaWallet, FaCog 
+  FaBoxOpen, FaClipboardList, FaWallet, FaCog, FaInbox
 } from 'react-icons/fa';
 import logo from '../../assets/gulit.png';
 
@@ -61,6 +61,7 @@ const SellerDashboardHeader = () => {
           <div className="hidden md:flex items-center gap-6 font-medium">
             <Link to="/seller/help-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
             <Link to="/seller/rules-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+            <Link to="/seller/inbox" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Inbox</Link>
           </div>
         </div>
 
@@ -100,6 +101,9 @@ const SellerDashboardHeader = () => {
                   </Link>
                   <Link to="/seller/wallet" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaWallet className="text-lg" /> Seller Wallet
+                  </Link>
+                  <Link to="/seller/inbox" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
+                    <FaInbox className="text-lg" /> Support Inbox
                   </Link>
                   <Link to="/seller/settings" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaCog className="text-lg" /> Shop Settings
