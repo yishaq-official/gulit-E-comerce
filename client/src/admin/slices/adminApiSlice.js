@@ -131,6 +131,30 @@ export const adminApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['AdminSeller'],
     }),
+    adminGetUsers: builder.query({
+      query: ({
+        keyword = '',
+        role = 'all',
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        page = 1,
+        limit = 10,
+      } = {}) => ({
+        url: `/api/admin/users?keyword=${encodeURIComponent(keyword)}&role=${encodeURIComponent(role)}&sortBy=${encodeURIComponent(
+          sortBy
+        )}&sortOrder=${encodeURIComponent(sortOrder)}&page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: ['AdminUser'],
+    }),
+    adminUpdateUserRole: builder.mutation({
+      query: ({ userId, role }) => ({
+        url: `/api/admin/users/${userId}/role`,
+        method: 'PATCH',
+        body: { role },
+      }),
+      invalidatesTags: ['AdminUser'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -150,4 +174,6 @@ export const {
   useAdminGetSellerOrdersQuery,
   useAdminGetSellerActivityQuery,
   useAdminAddSellerNoteMutation,
+  useAdminGetUsersQuery,
+  useAdminUpdateUserRoleMutation,
 } = adminApiSlice;
