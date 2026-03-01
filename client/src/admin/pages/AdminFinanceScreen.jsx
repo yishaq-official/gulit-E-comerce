@@ -113,27 +113,27 @@ const AdminFinanceScreen = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
                 <p className="text-xs text-emerald-200 uppercase tracking-wide">Platform Income</p>
-                <p className="text-2xl font-black text-emerald-100 mt-1">{currency(summary.platformIncome)}</p>
+                <p className="text-2xl font-black text-cyan-300 mt-1">{currency(summary.platformIncome)}</p>
               </div>
               <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">
                 <p className="text-xs text-cyan-200 uppercase tracking-wide">Seller Income</p>
-                <p className="text-2xl font-black text-cyan-100 mt-1">{currency(summary.sellerIncome)}</p>
+                <p className="text-2xl font-black text-cyan-300 mt-1">{currency(summary.sellerIncome)}</p>
               </div>
               <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
                 <p className="text-xs text-violet-200 uppercase tracking-wide">Market Income</p>
-                <p className="text-2xl font-black text-violet-100 mt-1">{currency(summary.totalMarketIncome)}</p>
+                <p className="text-2xl font-black text-cyan-300 mt-1">{currency(summary.totalMarketIncome)}</p>
               </div>
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
                 <p className="text-xs text-amber-200 uppercase tracking-wide">Wallets Outstanding</p>
-                <p className="text-2xl font-black text-amber-100 mt-1">{currency(summary.walletsOutstanding)}</p>
+                <p className="text-2xl font-black border-amber-500/30 mt-1">{currency(summary.walletsOutstanding)}</p>
               </div>
               <div className="rounded-xl border border-orange-500/30 bg-orange-500/10 p-4">
-                <p className="text-xs text-orange-200 uppercase tracking-wide">Pending Settlement</p>
-                <p className="text-2xl font-black text-orange-100 mt-1">{currency(summary.pendingSettlementValue)}</p>
+                <p className="text-xs text-orange-500 uppercase tracking-wide">Pending Settlement</p>
+                <p className="text-2xl font-black text-orange-400 mt-1">{currency(summary.pendingSettlementValue)}</p>
               </div>
               <div className="rounded-xl border border-fuchsia-500/30 bg-fuchsia-500/10 p-4">
-                <p className="text-xs text-fuchsia-200 uppercase tracking-wide">Open Disputes</p>
-                <p className="text-2xl font-black text-fuchsia-100 mt-1">{intFormat(summary.openDisputesCount)}</p>
+                <p className="text-xs text-fuchsia-500 uppercase tracking-wide">Open Disputes</p>
+                <p className="text-2xl font-black text-fuchsia-400 mt-1">{intFormat(summary.openDisputesCount)}</p>
                 <p className="text-[11px] text-fuchsia-200/80 mt-1">{intFormat(summary.paidOrdersCount)} paid orders</p>
               </div>
             </div>
