@@ -8,6 +8,7 @@ import {
   FaBoxOpen, FaClipboardList, FaWallet, FaCog, FaInbox
 } from 'react-icons/fa';
 import logo from '../../assets/gulit.png';
+import ThemeToggle from '../ThemeToggle';
 
 const SellerDashboardHeader = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -40,7 +41,7 @@ const SellerDashboardHeader = () => {
   };
 
   return (
-    <nav className="fixed w-full z-50 bg-[#0f172a]/95 backdrop-blur-md border-b border-gray-800 shadow-xl shadow-gray-900/20">
+    <nav className="fixed w-full z-50 bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-xl shadow-gray-900/20 transition-colors">
       <div className="w-full px-6 md:px-12 h-20 flex items-center justify-between">
         
         {/* ==============================
@@ -53,28 +54,31 @@ const SellerDashboardHeader = () => {
               alt="Gulit Logo" 
               className="w-50 h-50 object-contain group-hover:scale-105 transition-transform duration-300" 
             />
-            <span className="text-2xl font-black text-white tracking-tight">
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               Gulit <span className="text-green-500 font-medium">Workspace</span>
             </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6 font-medium">
-            <Link to="/seller/help-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
-            <Link to="/seller/rules-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
-            <Link to="/seller/inbox" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Inbox</Link>
+            <Link to="/seller/help-center" className="text-gray-600 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300">Help Center</Link>
+            <Link to="/seller/rules-center" className="text-gray-600 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+            <Link to="/seller/inbox" className="text-gray-600 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300">Inbox</Link>
           </div>
         </div>
 
         {/* ==============================
             RIGHT SIDE: Dropdown & Logout
             ============================== */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
           
           {/* Profile Dropdown Container */}
           <div className="relative" ref={dropdownRef}>
             <button 
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 text-white font-medium bg-[#1e293b] hover:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-700 transition-all focus:outline-none focus:border-green-500"
+              className="flex items-center gap-2 text-slate-900 dark:text-white font-medium bg-gray-100 dark:bg-[#1e293b] hover:bg-gray-200 dark:hover:bg-gray-800 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 transition-all focus:outline-none focus:border-green-500"
             >
               <FaUserCircle className="text-green-500 text-xl" />
               <span>{sellerInfo?.shopName || 'My Store'}</span>
@@ -83,29 +87,29 @@ const SellerDashboardHeader = () => {
 
             {/* Dropdown Menu */}
             {dropdownOpen && (
-              <div className="absolute right-0 mt-3 w-64 bg-[#1e293b] border border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-fade-in-up">
-                <div className="px-5 py-4 border-b border-gray-700 bg-[#0f172a]/50">
-                  <p className="text-sm text-gray-400">Signed in as</p>
-                  <p className="text-sm font-bold text-white truncate">{sellerInfo?.email}</p>
+              <div className="absolute right-0 mt-3 w-64 bg-white dark:bg-[#1e293b] border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-50 animate-fade-in-up">
+                <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#0f172a]/50">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Signed in as</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{sellerInfo?.email}</p>
                 </div>
                 
                 <div className="py-2 flex flex-col">
-                  <Link to="/seller/dashboard" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
+                  <Link to="/seller/dashboard" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaChartPie className="text-lg" /> Dashboard Analytics
                   </Link>
-                  <Link to="/seller/products" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
+                  <Link to="/seller/products" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaBoxOpen className="text-lg" /> Manage Products
                   </Link>
-                  <Link to="/seller/orders" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
+                  <Link to="/seller/orders" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaClipboardList className="text-lg" /> Orders & Fulfillment
                   </Link>
-                  <Link to="/seller/wallet" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
+                  <Link to="/seller/wallet" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaWallet className="text-lg" /> Seller Wallet
                   </Link>
-                  <Link to="/seller/inbox" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
+                  <Link to="/seller/inbox" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaInbox className="text-lg" /> Support Inbox
                   </Link>
-                  <Link to="/seller/settings" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-300 hover:text-green-400 hover:bg-white/5 flex items-center gap-3 transition-colors">
+                  <Link to="/seller/settings" onClick={() => setDropdownOpen(false)} className="px-5 py-3 text-gray-700 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 transition-colors">
                     <FaCog className="text-lg" /> Shop Settings
                   </Link>
                 </div>
@@ -116,7 +120,7 @@ const SellerDashboardHeader = () => {
           {/* Dedicated Navbar Logout Button */}
           <button 
             onClick={logoutHandler}
-            className="hidden md:flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-bold px-5 py-2.5 rounded-xl transition-colors border border-red-500/20"
+            className="hidden md:flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 hover:text-red-500 dark:hover:text-red-300 font-bold px-5 py-2.5 rounded-xl transition-colors border border-red-500/20"
           >
             <FaSignOutAlt /> Logout
           </button>

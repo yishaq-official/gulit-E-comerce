@@ -5,6 +5,7 @@ import { useSellerLogoutApiMutation } from '../../store/slices/sellersApiSlice';
 import { logoutSeller } from '../../store/slices/sellerAuthSlice';
 import { FaBars, FaTimes, FaUserCircle, FaSignOutAlt } from 'react-icons/fa';
 import logo from '../../assets/gulit.png';
+import ThemeToggle from '../ThemeToggle';
 
 const SellerHeader = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,7 +27,7 @@ const SellerHeader = () => {
   };
 
   return (
-    <nav className="fixed w-full z-50 bg-[#0f172a]/90 backdrop-blur-md border-b border-gray-800 shadow-xl shadow-gray-900/20 transition-all duration-300">
+    <nav className="fixed w-full z-50 bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-xl shadow-gray-900/20 transition-all duration-300">
       <div className="w-full px-6 md:px-12 h-20 flex items-center justify-between">
         
         {/* ==============================
@@ -39,15 +40,15 @@ const SellerHeader = () => {
               alt="Gulit Logo" 
               className="w-50 h-50 object-contain group-hover:scale-105 transition-transform duration-300" 
             />
-            <span className="text-2xl font-black text-white tracking-tight">
+            <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               Gulit <span className="text-green-500 font-medium">Seller Center</span>
             </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6 font-medium">
-            <Link to="/seller/help-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Help Center</Link>
-            <Link to="/seller/rules-center" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Rules Center</Link>
-            {sellerInfo?.isApproved ? <Link to="/seller/inbox" className="text-gray-400 hover:text-green-400 transition-colors duration-300">Inbox</Link> : null}
+            <Link to="/seller/help-center" className="text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300">Help Center</Link>
+            <Link to="/seller/rules-center" className="text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+            {sellerInfo?.isApproved ? <Link to="/seller/inbox" className="text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300">Inbox</Link> : null}
           </div>
         </div>
 
@@ -63,19 +64,19 @@ const SellerHeader = () => {
               
               {/* If approved, show dashboard link */}
               {sellerInfo.isApproved && (
-                <Link to="/seller/dashboard" className="text-gray-300 hover:text-green-400 font-bold transition-colors">
+                <Link to="/seller/dashboard" className="text-gray-800 dark:text-gray-300 hover:text-green-500 dark:hover:text-green-400 font-bold transition-colors">
                   Dashboard
                 </Link>
               )}
               
-              <div className="flex items-center gap-2 text-white font-medium bg-[#1e293b] px-4 py-2 rounded-full border border-gray-700">
+              <div className="flex items-center gap-2 text-slate-900 dark:text-white font-medium bg-gray-100 dark:bg-[#1e293b] px-4 py-2 rounded-full border border-gray-200 dark:border-gray-700">
                 <FaUserCircle className="text-green-500 text-xl" />
                 <span>{sellerInfo.shopName}</span>
               </div>
               
               <button 
                 onClick={logoutHandler}
-                className="text-gray-400 hover:text-red-400 flex items-center gap-2 font-bold transition-colors"
+                className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-2 font-bold transition-colors"
               >
                 <FaSignOutAlt /> Sign Out
               </button>
@@ -85,7 +86,7 @@ const SellerHeader = () => {
             <>
               <Link 
                 to="/seller/login" 
-                className="text-white hover:text-green-400 hover:bg-white/5 px-5 py-2.5 rounded-xl font-bold transition-all duration-300"
+                className="text-slate-900 dark:text-white hover:text-green-500 dark:hover:text-green-400 hover:bg-black/5 dark:hover:bg-white/5 px-5 py-2.5 rounded-xl font-bold transition-all duration-300"
               >
                 Seller Login
               </Link>
@@ -101,42 +102,48 @@ const SellerHeader = () => {
         </div>
 
         {/* Mobile Menu Toggle */}
-        <button 
-          className="md:hidden text-2xl text-white hover:text-green-400 transition-colors duration-300" 
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <FaTimes /> : <FaBars />}
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
+          <button 
+            className="md:hidden text-2xl text-slate-900 dark:text-white hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300" 
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <FaTimes /> : <FaBars />}
+          </button>
+        </div>
       </div>
 
       {/* ==============================
           MOBILE DROPDOWN MENU 
           ============================== */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#1e293b] border-b border-gray-800 p-4 flex flex-col gap-4 shadow-xl transition-all duration-300">
-          <Link to="/seller/help-center" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Help Center</Link>
-          <Link to="/seller/rules-center" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Rules Center</Link>
-          {sellerInfo?.isApproved ? <Link to="/seller/inbox" className="text-gray-300 font-medium hover:text-green-400 transition-colors duration-300">Inbox</Link> : null}
-          <hr className="border-gray-700" />
+        <div className="md:hidden bg-gray-100 dark:bg-[#1e293b] border-b border-gray-200 dark:border-gray-800 p-4 flex flex-col gap-4 shadow-xl transition-all duration-300">
+          <Link to="/seller/help-center" className="text-gray-700 dark:text-gray-300 font-medium hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300">Help Center</Link>
+          <Link to="/seller/rules-center" className="text-gray-700 dark:text-gray-300 font-medium hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300">Rules Center</Link>
+          {sellerInfo?.isApproved ? <Link to="/seller/inbox" className="text-gray-700 dark:text-gray-300 font-medium hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300">Inbox</Link> : null}
+          <hr className="border-gray-300 dark:border-gray-700" />
           
           {sellerInfo ? (
             <>
-              <div className="text-green-400 font-bold flex items-center gap-2">
+              <div className="text-green-600 dark:text-green-400 font-bold flex items-center gap-2">
                 <FaUserCircle /> {sellerInfo.shopName}
               </div>
               {sellerInfo.isApproved && (
-                <Link to="/seller/dashboard" className="text-white font-bold hover:text-green-400 transition-colors">Dashboard</Link>
+                <Link to="/seller/dashboard" className="text-slate-900 dark:text-white font-bold hover:text-green-600 dark:hover:text-green-400 transition-colors">Dashboard</Link>
               )}
-              <button onClick={logoutHandler} className="text-red-400 font-bold text-left flex items-center gap-2">
+              <button onClick={logoutHandler} className="text-red-600 dark:text-red-400 font-bold text-left flex items-center gap-2">
                 <FaSignOutAlt /> Sign Out
               </button>
             </>
           ) : (
             <>
-              <Link to="/seller/login" className="text-white font-bold hover:text-green-400 transition-colors duration-300">Seller Login</Link>
+              <Link to="/seller/login" className="text-slate-900 dark:text-white font-bold hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300">Seller Login</Link>
               <Link to="/seller/register" className="bg-green-500 hover:bg-green-400 text-[#0f172a] px-4 py-3 rounded-xl text-center font-black transition-colors duration-300">Start Selling</Link>
             </>
           )}
+          <ThemeToggle className="w-full justify-center" />
         </div>
       )}
     </nav>

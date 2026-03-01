@@ -7,7 +7,7 @@ import PlatformUpdatesBanner from './PlatformUpdatesBanner';
 
 const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors">
       <Header />
       <div className="container mx-auto px-4 pt-3">
         <PlatformUpdatesBanner audience="buyer" />

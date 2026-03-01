@@ -6,7 +6,7 @@ import PlatformUpdatesBanner from '../PlatformUpdatesBanner';
 
 const SellerLayout = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-[#0f172a] text-gray-300 font-sans w-full">
+    <div className="flex flex-col min-h-screen bg-gray-50 text-slate-900 dark:bg-[#0f172a] dark:text-gray-300 font-sans w-full transition-colors">
       <SellerHeader />
       <main className="flex-grow pt-20"> {/* pt-20 pushes content below the fixed header */}
         <div className="container mx-auto px-4 pt-3">

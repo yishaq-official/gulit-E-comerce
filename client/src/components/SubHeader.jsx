@@ -9,7 +9,7 @@ const SubHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="bg-white border-b border-gray-200 hidden md:block shadow-sm">
+    <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 hidden md:block shadow-sm transition-colors">
       <div className="container mx-auto max-w-7xl px-4 py-2 flex items-center gap-8">
         
         {/* Dropdown Container */}
@@ -25,12 +25,12 @@ const SubHeader = () => {
 
           {/* The Dropdown Menu */}
           {isOpen && (
-            <div className="absolute top-full left-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-fade-in-up">
+            <div className="absolute top-full left-0 mt-3 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 py-2 animate-fade-in-up">
               
               {/* This is the magic "Show All Products" button! */}
               <Link 
                 to="/" 
-                className="block px-5 py-3 text-sm font-black text-gray-900 hover:bg-red-50 hover:text-red-600 border-b border-gray-100 transition-colors"
+                className="block px-5 py-3 text-sm font-black text-gray-900 dark:text-white hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-300 border-b border-gray-100 dark:border-slate-700 transition-colors"
               >
                 View All Products
               </Link>
@@ -41,7 +41,7 @@ const SubHeader = () => {
                   <Link 
                     key={cat} 
                     to={`/category/${cat.toLowerCase()}`} 
-                    className="block px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-red-600 transition-colors"
+                    className="block px-5 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-red-600 dark:hover:text-red-300 transition-colors"
                   >
                     {cat}
                   </Link>
@@ -57,7 +57,7 @@ const SubHeader = () => {
             <Link 
               key={cat} 
               to={`/category/${cat.toLowerCase()}`} 
-              className="text-sm font-bold text-gray-600 hover:text-red-600 transition-colors whitespace-nowrap"
+              className="text-sm font-bold text-gray-600 dark:text-gray-200 hover:text-red-600 dark:hover:text-red-300 transition-colors whitespace-nowrap"
             >
               {cat}
             </Link>

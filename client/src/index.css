@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+:root {
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+:root.dark {
+  color: #e2e8f0;
+  background-color: #0b1220;
+  color-scheme: dark;
+}
+
+body {
+  background-color: inherit;
+  color: inherit;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
 @keyframes platformUpdateEnter {
   0% {
     opacity: 0;
