@@ -58,9 +58,12 @@ import AdminFinanceScreen from './admin/pages/AdminFinanceScreen';
 import AdminSupportDeskScreen from './admin/pages/AdminSupportDeskScreen';
 import AdminSystemSettingsScreen from './admin/pages/AdminSystemSettingsScreen';
 import AdminRouteGuard from './admin/components/AdminRoute';
+import { useTheme } from './context/ThemeContext';
 
 
 const App = () => {
+  const { theme } = useTheme();
+
   return (
     <Router>
       <Routes>
@@ -140,7 +143,7 @@ const App = () => {
         </Route>
 
       </Routes>
-      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+      <ToastContainer position="top-right" autoClose={3000} theme={theme} />
     </Router>
   );
 };

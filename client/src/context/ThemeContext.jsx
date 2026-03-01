@@ -9,24 +9,20 @@ const ThemeContext = createContext({
 const storageKey = 'gulit-theme';
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light');
-
-  // Initialize theme from localStorage or system preference
-  useEffect(() => {
+  const [theme, setTheme] = useState(() => {
     const storedTheme = localStorage.getItem(storageKey);
     if (storedTheme === 'light' || storedTheme === 'dark') {
-      setTheme(storedTheme);
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      return storedTheme;
     }
-  }, []);
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   // Sync theme to document root and localStorage
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
+    root.setAttribute('data-theme', theme);
     localStorage.setItem(storageKey, theme);
   }, [theme]);
 
