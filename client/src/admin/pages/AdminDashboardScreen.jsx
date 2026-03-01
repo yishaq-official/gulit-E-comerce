@@ -16,6 +16,7 @@ import { adminLogout } from '../slices/adminAuthSlice';
 import { useAdminStatsQuery } from '../slices/adminApiSlice';
 import logo from '../../assets/gulit.png';
 import AdminSidebar from '../components/AdminSidebar';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const AdminDashboardScreen = () => {
   const { adminInfo } = useSelector((state) => state.adminAuth);
@@ -124,6 +125,7 @@ const AdminDashboardScreen = () => {
               <FaSearch className="text-gray-500" />
               <span>Search sellers, users, orders...</span>
             </div>
+            <ThemeToggle />
             <button
               type="button"
               onClick={logoutHandler}
@@ -148,6 +150,9 @@ const AdminDashboardScreen = () => {
                 <h1 className="text-2xl sm:text-3xl font-black">Welcome, {adminInfo?.name}</h1>
                 <p className="text-gray-300 mt-2">Control trust, growth, and marketplace safety from one dashboard.</p>
                 <div className="md:hidden mt-4">
+                  <div className="mb-3">
+                    <ThemeToggle />
+                  </div>
                   <button
                     type="button"
                     onClick={logoutHandler}

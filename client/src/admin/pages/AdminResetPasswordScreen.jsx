@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaArrowLeft, FaLock } from 'react-icons/fa';
 import { useAdminResetPasswordMutation } from '../slices/adminApiSlice';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const AdminResetPasswordScreen = () => {
   const { token } = useParams();
@@ -27,7 +28,10 @@ const AdminResetPasswordScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1020] text-white flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-[#0a1020] text-white flex items-center justify-center px-4 py-10 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-xl bg-[#111827] border border-gray-800 rounded-3xl p-8">
         <Link to="/admin/login" className="inline-flex items-center gap-2 text-gray-400 hover:text-cyan-300 font-bold mb-6">
           <FaArrowLeft /> Back to Login

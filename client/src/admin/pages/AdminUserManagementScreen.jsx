@@ -14,6 +14,7 @@ import {
 import { toast } from 'react-toastify';
 import logo from '../../assets/gulit.png';
 import AdminSidebar from '../components/AdminSidebar';
+import ThemeToggle from '../../components/ThemeToggle';
 import { adminLogout } from '../slices/adminAuthSlice';
 import { useAdminExportSellersCsvMutation, useAdminGetSellersQuery } from '../slices/adminApiSlice';
 
@@ -131,13 +132,16 @@ const AdminUserManagementScreen = () => {
               <p className="text-lg font-black text-gray-100">Seller Performance</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={logoutHandler}
-            className="inline-flex items-center justify-center gap-2 bg-red-500/15 hover:bg-red-500/25 text-red-200 font-bold px-4 py-2.5 rounded-xl border border-red-500/30 transition-colors"
-          >
-            <FaSignOutAlt /> Logout
-          </button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={logoutHandler}
+              className="inline-flex items-center justify-center gap-2 bg-red-500/15 hover:bg-red-500/25 text-red-200 font-bold px-4 py-2.5 rounded-xl border border-red-500/30 transition-colors"
+            >
+              <FaSignOutAlt /> Logout
+            </button>
+          </div>
         </div>
       </header>
 

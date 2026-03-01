@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -60,12 +60,29 @@ import AdminSystemSettingsScreen from './admin/pages/AdminSystemSettingsScreen';
 import AdminRouteGuard from './admin/components/AdminRoute';
 import { useTheme } from './context/ThemeContext';
 
+const RouteScopeSync = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    let scope = 'buyer';
+    if (pathname.startsWith('/admin')) {
+      scope = 'admin';
+    } else if (pathname.startsWith('/seller') || pathname === '/sell') {
+      scope = 'seller';
+    }
+
+    document.documentElement.setAttribute('data-scope', scope);
+  }, [pathname]);
+
+  return null;
+};
 
 const App = () => {
   const { theme } = useTheme();
 
   return (
     <Router>
+      <RouteScopeSync />
       <Routes>
         
         {/* =======================================

@@ -3,22 +3,14 @@
 
 :root {
   --app-bg: #f8fafc;
-  --app-surface: #ffffff;
-  --app-surface-muted: #f1f5f9;
-  --app-border: #e2e8f0;
   --app-text: #0f172a;
-  --app-text-muted: #64748b;
   color: var(--app-text);
   background-color: var(--app-bg);
 }
 
 :root.dark {
   --app-bg: #0b1220;
-  --app-surface: #0f172a;
-  --app-surface-muted: #1e293b;
-  --app-border: #334155;
   --app-text: #e2e8f0;
-  --app-text-muted: #94a3b8;
   color: var(--app-text);
   background-color: var(--app-bg);
   color-scheme: dark;
@@ -30,7 +22,7 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
-/* Legacy Tailwind utility mapping for dark theme */
+/* Generic dark-mode mapping for legacy light pages */
 :root.dark .bg-white {
   background-color: #0f172a;
 }
@@ -73,49 +65,114 @@ body {
   border-color: #334155;
 }
 
-/* Light theme remap for legacy dark-styled screens (seller/admin pages) */
-:root.light [class*="bg-[#070c18]"],
-:root.light [class*="bg-[#081122]"],
-:root.light [class*="bg-[#0a1020]"],
-:root.light [class*="bg-[#0b1324]"],
-:root.light [class*="bg-[#020617]"],
-:root.light [class*="bg-[#0b1220]"],
-:root.light [class*="bg-[#0f172a]"] {
-  background-color: #f8fafc;
+/* Scoped light-mode mapping for legacy dark-styled seller/admin interfaces */
+:root.light:is([data-scope="admin"], [data-scope="seller"]) {
+  --scope-bg: #f1f5f9;
+  --scope-surface: #ffffff;
+  --scope-surface-soft: #eef2ff;
+  --scope-border: #cbd5e1;
+  --scope-text: #0f172a;
+  --scope-muted: #475569;
 }
 
-:root.light [class*="bg-[#111827]"],
-:root.light [class*="bg-[#1e293b]"] {
-  background-color: #e2e8f0;
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#070c18]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#081122]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#0a1020]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#0b1324]"] {
+  background-color: var(--scope-bg);
 }
 
-:root.light [class*="border-gray-700"],
-:root.light [class*="border-gray-800"] {
-  border-color: #cbd5e1;
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#0f172a]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#0a1224]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#091022]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#111827]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#1e293b]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#1f1a1a]"] {
+  background-color: var(--scope-surface);
 }
 
-:root.light [class*="divide-gray-800"] {
-  border-color: #cbd5e1;
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#020617]"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="bg-[#0b1220]"] {
+  background-color: var(--scope-surface-soft);
 }
 
-:root.light :is(h1, h2, h3, h4, h5, h6, p, span, td, th, div, label, li)[class~="text-white"] {
-  color: #0f172a;
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="border-white/"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="border-gray-700"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="border-gray-800"] {
+  border-color: var(--scope-border);
 }
 
-:root.light a[class~="text-white"]:not([class*="bg-"]) {
-  color: #0f172a;
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="divide-gray-700"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="divide-gray-800"] {
+  border-color: var(--scope-border);
 }
 
-:root.light [class~="text-gray-300"] {
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-white"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-gray-100"] {
+  color: var(--scope-text);
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"])
+  :is(
+    [class~="text-white"][class*="bg-red-"],
+    [class~="text-white"][class*="bg-green-"],
+    [class~="text-white"][class*="bg-blue-"],
+    [class~="text-white"][class*="bg-cyan-"],
+    [class~="text-white"][class*="bg-orange-"],
+    [class~="text-white"][class*="bg-violet-"],
+    [class~="text-white"][class*="bg-emerald-"],
+    [class~="text-white"][class*="bg-amber-"],
+    [class~="text-white"][class*="bg-fuchsia-"],
+    [class~="text-white"][class*="bg-rose-"],
+    [class~="text-white"][class*="bg-indigo-"]
+  ) {
+  color: #ffffff;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-gray-200"] {
+  color: #1e293b;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-gray-300"] {
   color: #334155;
 }
 
-:root.light [class~="text-gray-400"] {
-  color: #475569;
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-gray-400"] {
+  color: #64748b;
 }
 
-:root.light [class~="text-gray-500"] {
-  color: #64748b;
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-gray-500"] {
+  color: #94a3b8;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-cyan-200"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-cyan-300"] {
+  color: #0e7490;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-emerald-200"] {
+  color: #047857;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-amber-200"] {
+  color: #b45309;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-violet-200"] {
+  color: #6d28d9;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class~="text-red-200"] {
+  color: #b91c1c;
+}
+
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="from-[#"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="via-[#"],
+:root.light:is([data-scope="admin"], [data-scope="seller"]) [class*="to-[#"] {
+  --tw-gradient-from: #ffffff var(--tw-gradient-from-position);
+  --tw-gradient-via: #eef2ff var(--tw-gradient-via-position);
+  --tw-gradient-to: #dbeafe var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to);
 }
 
 @keyframes platformUpdateEnter {

@@ -10,6 +10,7 @@ import {
   FaUsers,
 } from 'react-icons/fa';
 import logo from '../../assets/gulit.png';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const navItems = [
   { key: 'dashboard', label: 'Dashboard', icon: FaHome, to: '/admin/dashboard' },
@@ -24,6 +25,9 @@ const navItems = [
 const AdminSidebar = ({ activeKey }) => {
   return (
     <aside className="bg-[#0f172a] border border-white/10 rounded-2xl p-4 h-fit lg:sticky lg:top-24">
+      <div className="mb-4">
+        <ThemeToggle className="w-full justify-center" />
+      </div>
       <div className="flex items-center justify-center mb-4 py-2">
         <img src={logo} alt="Gulit" className="w-40 h-40 object-contain" />
       </div>

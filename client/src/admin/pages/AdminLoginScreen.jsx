@@ -9,6 +9,7 @@ import {
 } from '../slices/adminApiSlice';
 import { setAdminCredentials } from '../slices/adminAuthSlice';
 import logo from '../../assets/gulit.png';
+import ThemeToggle from '../../components/ThemeToggle';
 
 const AdminLoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -87,7 +88,10 @@ const AdminLoginScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a1020] text-white flex items-center justify-center px-4 py-10">
+    <div className="min-h-screen bg-[#0a1020] text-white flex items-center justify-center px-4 py-10 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-5xl rounded-[2rem] border border-cyan-500/20 bg-gradient-to-br from-[#111827] via-[#0f172a] to-[#0a1020] overflow-hidden shadow-2xl shadow-cyan-900/20 grid grid-cols-1 md:grid-cols-2">
         <div className="p-10 md:p-12 border-b md:border-b-0 md:border-r border-gray-800">
           <div className="inline-flex items-center gap-3 mb-8">
