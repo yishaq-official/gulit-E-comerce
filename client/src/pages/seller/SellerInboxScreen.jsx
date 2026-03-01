@@ -94,15 +94,15 @@ const SellerInboxScreen = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 p-4">
           <p className="text-xs uppercase tracking-wide text-cyan-200">Total Threads</p>
-          <p className="text-2xl font-black text-cyan-100 mt-1">{summary.totalThreads || 0}</p>
+          <p className="text-2xl font-black text-cyan-200 mt-1">{summary.totalThreads || 0}</p>
         </div>
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
           <p className="text-xs uppercase tracking-wide text-amber-200">Unread</p>
-          <p className="text-2xl font-black text-amber-100 mt-1">{summary.unread || 0}</p>
+          <p className="text-2xl font-black text-amber-200 mt-1">{summary.unread || 0}</p>
         </div>
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
           <p className="text-xs uppercase tracking-wide text-emerald-200">Open Threads</p>
-          <p className="text-2xl font-black text-emerald-100 mt-1">{summary.open || 0}</p>
+          <p className="text-2xl font-black text-emerald-200 mt-1">{summary.open || 0}</p>
         </div>
       </div>
 
