@@ -1,13 +1,26 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  color: #0f172a;
-  background-color: #f8fafc;
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-surface-muted: #f1f5f9;
+  --app-border: #e2e8f0;
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  color: var(--app-text);
+  background-color: var(--app-bg);
 }
 
 :root.dark {
-  color: #e2e8f0;
-  background-color: #0b1220;
+  --app-bg: #0b1220;
+  --app-surface: #0f172a;
+  --app-surface-muted: #1e293b;
+  --app-border: #334155;
+  --app-text: #e2e8f0;
+  --app-text-muted: #94a3b8;
+  color: var(--app-text);
+  background-color: var(--app-bg);
   color-scheme: dark;
 }
 
@@ -15,6 +28,94 @@ body {
   background-color: inherit;
   color: inherit;
   transition: background-color 200ms ease, color 200ms ease;
+}
+
+/* Legacy Tailwind utility mapping for dark theme */
+:root.dark .bg-white {
+  background-color: #0f172a;
+}
+
+:root.dark .bg-gray-50 {
+  background-color: #111827;
+}
+
+:root.dark .bg-gray-100 {
+  background-color: #1e293b;
+}
+
+:root.dark .text-gray-900 {
+  color: #f8fafc;
+}
+
+:root.dark .text-gray-800 {
+  color: #e2e8f0;
+}
+
+:root.dark .text-gray-700 {
+  color: #cbd5e1;
+}
+
+:root.dark .text-gray-600 {
+  color: #94a3b8;
+}
+
+:root.dark .text-gray-500 {
+  color: #94a3b8;
+}
+
+:root.dark .text-gray-400 {
+  color: #64748b;
+}
+
+:root.dark .border-gray-100,
+:root.dark .border-gray-200,
+:root.dark .border-gray-300 {
+  border-color: #334155;
+}
+
+/* Light theme remap for legacy dark-styled screens (seller/admin pages) */
+:root.light [class*="bg-[#070c18]"],
+:root.light [class*="bg-[#081122]"],
+:root.light [class*="bg-[#0a1020]"],
+:root.light [class*="bg-[#0b1324]"],
+:root.light [class*="bg-[#020617]"],
+:root.light [class*="bg-[#0b1220]"],
+:root.light [class*="bg-[#0f172a]"] {
+  background-color: #f8fafc;
+}
+
+:root.light [class*="bg-[#111827]"],
+:root.light [class*="bg-[#1e293b]"] {
+  background-color: #e2e8f0;
+}
+
+:root.light [class*="border-gray-700"],
+:root.light [class*="border-gray-800"] {
+  border-color: #cbd5e1;
+}
+
+:root.light [class*="divide-gray-800"] {
+  border-color: #cbd5e1;
+}
+
+:root.light :is(h1, h2, h3, h4, h5, h6, p, span, td, th, div, label, li)[class~="text-white"] {
+  color: #0f172a;
+}
+
+:root.light a[class~="text-white"]:not([class*="bg-"]) {
+  color: #0f172a;
+}
+
+:root.light [class~="text-gray-300"] {
+  color: #334155;
+}
+
+:root.light [class~="text-gray-400"] {
+  color: #475569;
+}
+
+:root.light [class~="text-gray-500"] {
+  color: #64748b;
 }
 
 @keyframes platformUpdateEnter {
