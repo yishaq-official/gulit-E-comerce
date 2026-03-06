@@ -29,7 +29,7 @@ const ProductCard = ({ product }) => {
         <img 
           src={`${BASE_URL}${product.image}`} 
           alt={product.name} 
-          className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
+          className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500 mix-blend-multiply dark:mix-blend-normal"
         />
         
         {/* Discount Badge */}
