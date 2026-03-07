@@ -97,7 +97,7 @@ const App = () => {
           <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
           <Route path="/product/:id" element={<ProductDetailScreen />} />
 
-          {/* 🔒 Protected Buyer Routes */}
+          {/* 🔒 Buyer Routes after login */}
           <Route path="" element={<PrivateRoute />}>
             <Route path="/profile" element={<ProfileScreen />} />
             <Route path="/shipping" element={<ShippingScreen />} />
