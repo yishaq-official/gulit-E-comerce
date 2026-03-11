@@ -119,9 +119,10 @@ SMTP_PASS=
 SMTP_FROM_EMAIL=
 ```
 
-Create `client/.env` (only if Google login is needed):
+Create `client/.env`:
 
 ```env
+VITE_API_BASE_URL=http://localhost:3000
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
@@ -210,4 +211,3 @@ npm run build
 
 ## License
 No explicit license file is currently provided in this repository.
-
